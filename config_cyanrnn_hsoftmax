@@ -1,0 +1,50 @@
+#training set#
+cas_file=/home/yqwang/workspace/data/memtracker/user-topics/memes-topics.0.train
+#validation set#
+crs_val_file=/home/yqwang/workspace/data/memtracker/user-topics/memes-topics.0.val
+
+freq_file=/home/yqwang/workspace/java/WeiboData/memes-topics.user.stats
+out_file=meme-user-topics.netrnn-gru.model
+
+#false: for training a new model#
+is_cont_training=false 
+
+last_rnn_model=
+
+rnn_type=gru
+
+no_of_minibatch_values=256
+
+train_strategy=adam
+beta1=0.9 
+beta2=0.999
+
+#learning rate#
+lr=.001 
+
+init_scale=1.
+bias_init_val=.1
+#maximum training epoches#
+epoch=100001
+#cycle for validation#
+validation_cycle=10
+stop_count=50
+#encoder size#
+node_size=165
+#input size#
+in_fixed_size=301
+in_dyn_size=1
+#hidden size#
+att_size=50
+hidden_size=30
+cov_size=2
+#output size#
+class_num=2
+
+window_size=20000
+
+#it better tunes to larger than 10, if the results go wrong
+time_div=10
+
+thread_num=4
+sleep_sec=1.

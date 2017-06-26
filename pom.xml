@@ -1,0 +1,132 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.kingwang.netrnn</groupId>
+  <artifactId>NETRNN</artifactId>
+  <version>0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>NetRNN</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>1.7</java.version>
+    <junit.version>4.11</junit.version>
+    <jblas.version>1.2.4</jblas.version>
+    <jama.version>1.0.3</jama.version>
+    <guava.version>18.0</guava.version>
+    <dl4j.version>0.4-rc3.8</dl4j.version>
+    <nd4j.version>0.4-rc3.8</nd4j.version>
+    <canova.version>0.0.0.14</canova.version>
+  </properties>
+
+	<!-- Platform-dependent backend selection (netlib is default) -->
+	<profiles>
+	    <profile>
+	        <id>cuda</id>
+	        <dependencies>
+	            <dependency>
+	                <groupId>org.nd4j</groupId>
+	                <artifactId>nd4j-jcublas-${cuda.version}</artifactId>
+	                <version>${nd4j.version}</version>
+	            </dependency>
+	        </dependencies>
+	    </profile>
+	    <profile>
+	        <id>netlib</id>
+	        <dependencies>
+	            <dependency>
+	                <groupId>org.nd4j</groupId>
+	                <artifactId>nd4j-x86</artifactId>
+	                <version>${nd4j.version}</version>
+	            </dependency>
+	        </dependencies>
+	        <activation>
+	            <activeByDefault>true</activeByDefault>
+	        </activation>
+	    </profile>
+	</profiles>
+	<!-- end platform-dependent backend selection -->
+
+  <dependencies>
+    <dependency>
+		<groupId>org.jblas</groupId>
+		<artifactId>jblas</artifactId>
+		<version>${jblas.version}</version>
+    </dependency>
+    <dependency>
+		<groupId>com.google.guava</groupId>
+		<artifactId>guava</artifactId>
+		<version>${guava.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>gov.nist.math</groupId>
+	    <artifactId>jama</artifactId>
+	    <version>${jama.version}</version>
+	</dependency>
+	<!-- <dependency>
+        <groupId>org.deeplearning4j</groupId>
+        <artifactId>deeplearning4j-nlp</artifactId>
+        <version>${dl4j.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.deeplearning4j</groupId>
+        <artifactId>deeplearning4j-core</artifactId>
+        <version>${dl4j.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.deeplearning4j</groupId>
+        <artifactId>deeplearning4j-ui</artifactId>
+        <version>${dl4j.version}</version>
+    </dependency>
+    <dependency>
+        <artifactId>canova-nd4j-image</artifactId>
+        <groupId>org.nd4j</groupId>
+        <version>${canova.version}</version>
+    </dependency> 
+    <dependency>
+        <artifactId>canova-nd4j-codec</artifactId>
+        <groupId>org.nd4j</groupId>
+        <version>${canova.version}</version>
+    </dependency> -->
+    <dependency>
+	    <groupId>junit</groupId>
+	    <artifactId>junit</artifactId>
+	    <version>${junit.version}</version>
+	    <scope>test</scope>
+    </dependency>
+  </dependencies>
+  
+  <build>
+  	<plugins>
+  		<plugin>
+  			<groupId>org.apache.maven.plugins</groupId>
+  			<artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+                <source>${java.version}</source>
+                <target>${java.version}</target>
+            </configuration>
+  		</plugin>
+  		<plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <configuration>
+                <archive>
+                    <manifest>
+                        <addClasspath>true</addClasspath>
+                        <mainClass></mainClass>
+                        <classpathPrefix>lib/</classpathPrefix>
+                    </manifest>
+                </archive>
+            </configuration>
+        </plugin>
+  	</plugins>
+  	<finalName>NetRNN</finalName>
+    <resources>
+        <resource>
+            <directory>src/main/resources</directory>
+        </resource>
+    </resources>
+  </build>
+</project>
