@@ -10,7 +10,8 @@ README
 #### rnn
 - RNN.java: main process of RNN
 
-## batchderv: when minibatch is finished, batchderv will calculate the current derivation from all calculated derivation in each batch
+## batchderv
+- (intro) when minibatch is finished, batchderv will calculate the current derivation from all calculated derivation in each batch
 - BatchDerivative.java: interface of BatchDerivative
 ### impl
 - AttBatchDerivative.java: for attention layer
@@ -28,15 +29,21 @@ README
 - Operator.java: basic operator for RNN layers
 ### baselines
 - rnn/impl: implementation of RNN
-### impl: implementation of CYAN-RNN and CYAN-RNN(cov)
-### main: main process of CYAN-RNN
+### impl
+- (intro) implementation of CYAN-RNN and CYAN-RNN(cov)
+### main
+-(intro) main process of CYAN-RNN
 
-## comm/utils: common utilities
+## comm/utils
+- (intro) common utilities
 
-## cons: constants
+## cons
+- (intro) constants
 
-## dataset: implementation of loading dataset
+## dataset
+- (intro) implementation of loading dataset
 
-## evals: implementation of CYAN-RNN and CYAN-RNN(cov) validation in tranining process
+## evals
+- (intro) implementation of CYAN-RNN and CYAN-RNN(cov) validation in tranining process
  
 ## utils: common utilities for RNN, CYAN-RNN, CYAN-RNN(cov)
