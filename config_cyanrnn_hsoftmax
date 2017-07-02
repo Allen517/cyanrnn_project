@@ -1,50 +1,68 @@
 #training set#
-cas_file=/home/yqwang/workspace/data/memtracker/user-topics/memes-topics.0.train
+cas_file=data/net32-cp-exp-cascades.train
 #validation set#
-crs_val_file=/home/yqwang/workspace/data/memtracker/user-topics/memes-topics.0.val
+crs_val_file=data/net32-cp-exp-cascades.val
 
-freq_file=/home/yqwang/workspace/java/WeiboData/memes-topics.user.stats
-out_file=meme-user-topics.netrnn-gru.model
+#frequence file: recording users' frequency in forwarding#
+freq_file=data/net32-cp-exp-cascades.freq.stats
+
+#output#
+out_file=net32-cp-exp.netrnn-gru.model
 
 #false: for training a new model#
 is_cont_training=false 
 
+#if is_cont_training=true, the training process will load last_rnn_model firstly
 last_rnn_model=
 
+#types: gru/lstm
 rnn_type=gru
 
+#number of samples in minibatch
 no_of_minibatch_values=256
 
+#strategies: adagrad/adam
 train_strategy=adam
+#the following two parameters are worked in adam
 beta1=0.9 
 beta2=0.999
 
 #learning rate#
 lr=.001 
 
+#initialization of parameter matrices: init_scale--the scale of random initialization for parameter matrices, bias_init_val--the scale of random initialization for bias
 init_scale=1.
 bias_init_val=.1
+
 #maximum training epoches#
 epoch=100001
+
 #cycle for validation#
 validation_cycle=10
+
+#if there are no more improvements in validation until stop_count, the tranining process will be stopped
 stop_count=50
+
 #encoder size#
-node_size=165
-#input size#
-in_fixed_size=301
+node_size=32
+
+#input size: in_fixed_size--the static input, e.g., features from feature engineering, in_dyn_size--the dynamic input, e.g., learning embedding along with the tranining process#
+in_fixed_size=50
 in_dyn_size=1
-#hidden size#
+
+#size of parameter matrices: att_size--the size of attention layer, cov_size--the size of coverage, hidden_size--the size of hidden layer#
 att_size=50
 hidden_size=30
 cov_size=2
+
 #output size#
-class_num=2
+class_num=1
 
 window_size=20000
 
-#it better tunes to larger than 10, if the results go wrong
+#scaling parameter for continuous time feature(it better tunes to larger than 10, if the results go wrong)
 time_div=10
 
+#thread number for parallel processing and corresponding sleep time for two consecutive threads
 thread_num=4
 sleep_sec=1.
