@@ -121,7 +121,7 @@ public class CyanRNN {
     
     private void train(DataLoader casLoader, String outFile) {
     	
-    	OutputStreamWriter oswLog = FileUtil.getOutputStreamWriter("log", true);
+    	OutputStreamWriter oswLog = FileUtil.getOutputStreamWriter("log_cyanrnn", true);
     	
     	double minCrsVal = Double.MAX_VALUE;
     	double minCrsValIter = -1;
