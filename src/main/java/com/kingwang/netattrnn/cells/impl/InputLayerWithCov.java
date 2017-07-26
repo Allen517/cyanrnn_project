@@ -96,7 +96,7 @@ public class InputLayerWithCov extends Operator implements Cell, Serializable {
      */
     public void bptt(Map<String, DoubleMatrix> acts, int lastT, Cell... cell) {
     	
-    	OutputLayerWithHSoftMax outLayer = (OutputLayerWithHSoftMax) cell[0];
+    	OutputLayerWithCov outLayer = (OutputLayerWithCov) cell[0];
     	AttentionWithCov att = (AttentionWithCov) cell[1];
     	GRUWithCov gru = (GRUWithCov)cell[2];
     	
@@ -105,6 +105,7 @@ public class InputLayerWithCov extends Operator implements Cell, Serializable {
     	
     	for (int t = 0; t < lastT + 1; t++) {
     		DoubleMatrix deltaX = null;
+    		DoubleMatrix deltaD = acts.get("dd"+t);
     		
     		DoubleMatrix code = acts.get("code"+t);
     		
@@ -124,7 +125,8 @@ public class InputLayerWithCov extends Operator implements Cell, Serializable {
             }
             deltaX = deltaX.add(acts.get("dy"+t).mmul(outLayer.Wxy[cidx].transpose())
             					.add(acts.get("dCls"+t).mmul(outLayer.Wxc.transpose()))
-            					.add(acts.get("dAt"+t).mmul(att.Wxt.transpose())));
+            					.add(acts.get("dAt"+t).mmul(att.Wxt.transpose())))
+            					.add(deltaD.mmul(outLayer.Wxd.transpose()));
     		
             int rowNum = (int) code.get(0);
             dWx.putRow(rowNum, dWx.getRow(rowNum).add(deltaX));

@@ -285,11 +285,12 @@ public class AttentionWithCov extends Operator implements Cell, Serializable {
 	
 	public void bptt(Map<String, DoubleMatrix> acts, int lastT, Cell... cell) {
 
-		OutputLayerWithHSoftMax outLayer = (OutputLayerWithHSoftMax)cell[0];
+		OutputLayerWithCov outLayer = (OutputLayerWithCov)cell[0];
 		
 		for (int t = lastT; t > -1; t--) {
 			DoubleMatrix deltaY = acts.get("dy"+t);
 			DoubleMatrix deltaCls = acts.get("dCls"+t);
+			DoubleMatrix deltaD = acts.get("dd"+t);
 			//get cidx
 			DoubleMatrix c = acts.get("cls" + t);
     		int cidx = 0;
@@ -316,7 +317,8 @@ public class AttentionWithCov extends Operator implements Cell, Serializable {
     		
     		// delta t
             DoubleMatrix deltaT = deltaY.mmul(outLayer.Wty[cidx].transpose())
-            						.add(deltaCls.mmul(outLayer.Wtc.transpose()));
+            						.add(deltaCls.mmul(outLayer.Wtc.transpose()))
+            						.add(deltaD.mmul(outLayer.Wtd.transpose()));
             if(t<lastT) {
             	int lateESize = Math.min(t+2, AlgConsHSoftmax.windowSize);
             	deltaT = deltaT.add(
@@ -324,10 +326,6 @@ public class AttentionWithCov extends Operator implements Cell, Serializable {
             					.add(DoubleMatrix.ones(1, lateESize).mmul(lateDgs.mmul(W.transpose())))
             					.add(DoubleMatrix.ones(1, lateESize).mmul(lateDgVecV.mmul(Wtv.transpose())))
             					);
-//            	int lateBsIdx = Math.max(0, t-AlgConsHSoftmax.windowSize+2);
-//            	for(int k=lateBsIdx; k<t+2; k++	) {
-//            		deltaT = deltaT.add(lateDgVecV.getRow(k-lateBsIdx).mmul(Wtv.transpose()));
-//            	}
             }
             DoubleMatrix vecT = acts.get("t"+t);
             DoubleMatrix deltaAt = deltaT.mul(deriveExp(vecT));
@@ -336,7 +334,8 @@ public class AttentionWithCov extends Operator implements Cell, Serializable {
             // delta s
             DoubleMatrix deltaS = deltaY.mmul(outLayer.Wsy[cidx].transpose())
 					            		.add(deltaCls.mmul(outLayer.Wsc.transpose()))
-					            		.add(deltaAt.mmul(Wst.transpose()));
+					            		.add(deltaAt.mmul(Wst.transpose()))
+					            		.add(deltaD.mmul(outLayer.Wsd.transpose()));
             acts.put("ds"+t, deltaS);
 			
 			// delta alpha

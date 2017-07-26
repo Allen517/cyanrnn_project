@@ -20,10 +20,10 @@ import java.util.concurrent.TimeUnit;
 import org.jblas.DoubleMatrix;
 import org.jblas.MatrixFunctions;
 
-import com.kingwang.netattrnn.cells.impl.AttentionWithTime;
-import com.kingwang.netattrnn.cells.impl.GRUWithTime;
-import com.kingwang.netattrnn.cells.impl.InputLayerWithTime;
-import com.kingwang.netattrnn.cells.impl.OutputLayerWithTime;
+import com.kingwang.netattrnn.cells.impl.AttentionWithCov;
+import com.kingwang.netattrnn.cells.impl.GRUWithCov;
+import com.kingwang.netattrnn.cells.impl.InputLayerWithCov;
+import com.kingwang.netattrnn.cells.impl.OutputLayerWithCov;
 import com.kingwang.netattrnn.comm.utils.CollectionHelper;
 import com.kingwang.netattrnn.comm.utils.Config;
 import com.kingwang.netattrnn.comm.utils.FileUtil;
@@ -51,15 +51,15 @@ public class CyanRNNWithTimeModelEvals {
 
 	public static Double logLkHd = .0;
 	public static Double mrr = .0;
-	public InputLayerWithTime input;
-	public GRUWithTime gru;
-	public AttentionWithTime att;
-	public OutputLayerWithTime output;
+	public InputLayerWithCov input;
+	public GRUWithCov gru;
+	public AttentionWithCov att;
+	public OutputLayerWithCov output;
 	public DataLoader casLoader;
 	public OutputStreamWriter oswLog;
 
-	public CyanRNNWithTimeModelEvals(InputLayerWithTime input, GRUWithTime gru,
-			AttentionWithTime att, OutputLayerWithTime output,
+	public CyanRNNWithTimeModelEvals(InputLayerWithCov input, GRUWithCov gru,
+			AttentionWithCov att, OutputLayerWithCov output,
 			DataLoader casLoader, OutputStreamWriter oswLog) {
 		this.input = input;
 		this.gru = gru;
@@ -348,14 +348,14 @@ public class CyanRNNWithTimeModelEvals {
 				AlgConsHSoftmax.crsValFile, AlgConsHSoftmax.freqFile,
 				AlgConsHSoftmax.cNum);
 
-		InputLayerWithTime input = new InputLayerWithTime(
+		InputLayerWithCov input = new InputLayerWithCov(
 				AlgConsHSoftmax.nodeSize, AlgConsHSoftmax.inDynSize, initer);
-		GRUWithTime gru = new GRUWithTime(AlgConsHSoftmax.inDynSize,
+		GRUWithCov gru = new GRUWithCov(AlgConsHSoftmax.inDynSize,
 				AlgConsHSoftmax.inFixedSize, AlgConsHSoftmax.hiddenSize, initer);
-		AttentionWithTime att = new AttentionWithTime(AlgConsHSoftmax.inDynSize,
+		AttentionWithCov att = new AttentionWithCov(AlgConsHSoftmax.inDynSize,
 				AlgConsHSoftmax.inFixedSize, AlgConsHSoftmax.attSize,
 				AlgConsHSoftmax.hiddenSize, AlgConsHSoftmax.covSize, initer);
-		OutputLayerWithTime output = new OutputLayerWithTime(
+		OutputLayerWithCov output = new OutputLayerWithCov(
 				AlgConsHSoftmax.inDynSize, AlgConsHSoftmax.inFixedSize,
 				AlgConsHSoftmax.attSize, AlgConsHSoftmax.hiddenSize,
 				AlgConsHSoftmax.cNum, initer);

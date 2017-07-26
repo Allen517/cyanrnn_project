@@ -1,31 +1,29 @@
-time_div:10
+time_div:1
 thread_num:4
-in_dyn_size:1
-in_fixed_size:301
-out_file:meme-user-topics.netrnn-gru.model
+in_dyn_size:10
+in_fixed_size:136
+out_file:net32-cp-exp.netrnn-gru.model
 rnn_type:gru
 beta1:0.9
 lr:.001
 beta2:0.999
 validation_cycle:10
 epoch:100001
+#if is_cont_training:true, the training process will load last_rnn_model firstly
 bias_init_val:.1
 is_cont_training:false
 window_size:20000
 cov_size:2
-node_size:165
-cas_file:/home/yqwang/workspace/data/memtracker/user-topics/memes-topics.0.train
+node_size:32
+cas_file:data/net32-cp-exp-cascades.train
 stop_count:50
-class_num:2
-crs_val_file:/home/yqwang/workspace/data/memtracker/user-topics/memes-topics.0.val
-freq_file:/home/yqwang/workspace/java/WeiboData/memes-topics.user.stats
+class_num:1
+crs_val_file:data/net32-cp-exp-cascades.val
+freq_file:data/net32-cp-exp-cascades.freq.stats
 train_strategy:adam
 sleep_sec:1.
-no_of_minibatch_values:256
 init_scale:1.
-att_size:50
-hidden_size:30
-Iter = 1, error = 2.488753999292926, time = 2.031s @input: 0.06s; rnn: 3.232s; att: 2.402s; output: 0.081s
-Iter = 2, error = 2.4179188593670426, time = 2.017s @input: 0.047s; rnn: 2.56s; att: 1.497s; output: 0.114s
-Iter = 3, error = 2.3041180715209766, time = 2.024s @input: 0.038s; rnn: 2.185s; att: 1.432s; output: 0.06s
-Iter = 4, error = 2.2416839850886974, time = 2.02s @input: 0.042s; rnn: 2.263s; att: 1.34s; output: 0.07s
+no_of_minibatch_values:256
+att_size:10
+hidden_size:10
+Iter = 1, error = 5.446112988004104, time = 2.015s @input: 0.197s; rnn: 1.856s; att: 2.264s; output: 1.304s

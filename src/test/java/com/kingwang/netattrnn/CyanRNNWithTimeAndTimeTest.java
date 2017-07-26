@@ -19,10 +19,10 @@ import org.jblas.MatrixFunctions;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.kingwang.netattrnn.cells.impl.AttentionWithTime;
-import com.kingwang.netattrnn.cells.impl.GRUWithTime;
-import com.kingwang.netattrnn.cells.impl.InputLayerWithTime;
-import com.kingwang.netattrnn.cells.impl.OutputLayerWithTime;
+import com.kingwang.netattrnn.cells.impl.AttentionWithCov;
+import com.kingwang.netattrnn.cells.impl.GRUWithCov;
+import com.kingwang.netattrnn.cells.impl.InputLayerWithCov;
+import com.kingwang.netattrnn.cells.impl.OutputLayerWithCov;
 import com.kingwang.netattrnn.cons.AlgConsHSoftmax;
 import com.kingwang.netattrnn.utils.MatIniter;
 import com.kingwang.netattrnn.utils.MatIniter.Type;
@@ -42,10 +42,10 @@ public class CyanRNNWithTimeAndTimeTest {
 	private int covSize;
 	private int nodeSize;
 	private int[] clsRcd;
-	private InputLayerWithTime input;
-	private GRUWithTime gru;
-	private AttentionWithTime att;
-	private OutputLayerWithTime output;
+	private InputLayerWithCov input;
+	private GRUWithCov gru;
+	private AttentionWithCov att;
+	private OutputLayerWithCov output;
 	private Map<String, DoubleMatrix> nodeCode;
 	private Map<String, DoubleMatrix> acts = new HashMap<>();
 	private List<Double> y1_arr = new ArrayList<>();
@@ -70,11 +70,11 @@ public class CyanRNNWithTimeAndTimeTest {
 		AlgConsHSoftmax.biasInitVal = 0;
 		
 		AlgConsHSoftmax.rnnType="gru";
-		input = new InputLayerWithTime(nodeSize, inDynSize, new MatIniter(Type.Test, 0, 0, 0));
-        att = new AttentionWithTime(inDynSize, inFixedSize, outSize, outoutSize
+		input = new InputLayerWithCov(nodeSize, inDynSize, new MatIniter(Type.Test, 0, 0, 0));
+        att = new AttentionWithCov(inDynSize, inFixedSize, outSize, outoutSize
         							, covSize, new MatIniter(Type.Test, 0, 0, 0));
-		gru = new GRUWithTime(inDynSize, inFixedSize, outSize, new MatIniter(Type.Test, 0, 0, 0)); // set cell
-		output = new OutputLayerWithTime(inDynSize, inFixedSize, outSize, outoutSize
+		gru = new GRUWithCov(inDynSize, inFixedSize, outSize, new MatIniter(Type.Test, 0, 0, 0)); // set cell
+		output = new OutputLayerWithCov(inDynSize, inFixedSize, outSize, outoutSize
 									, AlgConsHSoftmax.cNum, new MatIniter(Type.Test, 0, 0, 0));
 		
 		DoubleMatrix Wx = new DoubleMatrix(nodeSize, inDynSize);
@@ -263,10 +263,10 @@ public class CyanRNNWithTimeAndTimeTest {
 		
 		MatIniter initer = new MatIniter(Type.Uniform, 1, 0, 0);
 		
-		input = new InputLayerWithTime(nodeSize, inDynSize, initer);
-		gru = new GRUWithTime(inDynSize, inFixedSize, outSize, initer);
-		att = new AttentionWithTime(inDynSize, inFixedSize, outSize, outoutSize, covSize, initer);
-		output = new OutputLayerWithTime(inDynSize, inFixedSize, outSize, outoutSize, AlgConsHSoftmax.cNum, initer);
+		input = new InputLayerWithCov(nodeSize, inDynSize, initer);
+		gru = new GRUWithCov(inDynSize, inFixedSize, outSize, initer);
+		att = new AttentionWithCov(inDynSize, inFixedSize, outSize, outoutSize, covSize, initer);
+		output = new OutputLayerWithCov(inDynSize, inFixedSize, outSize, outoutSize, AlgConsHSoftmax.cNum, initer);
 		int reviseLoc = 1;
 		int targetT = 2;
 		

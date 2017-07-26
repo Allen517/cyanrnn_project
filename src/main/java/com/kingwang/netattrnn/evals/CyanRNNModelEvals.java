@@ -23,6 +23,7 @@ import com.kingwang.netattrnn.cells.impl.Attention;
 import com.kingwang.netattrnn.cells.impl.GRU;
 import com.kingwang.netattrnn.cells.impl.InputLayer;
 import com.kingwang.netattrnn.cells.impl.OutputLayerWithHSoftMax;
+import com.kingwang.netattrnn.cells.impl.OutputLayerWithCov;
 import com.kingwang.netattrnn.comm.utils.CollectionHelper;
 import com.kingwang.netattrnn.comm.utils.Config;
 import com.kingwang.netattrnn.comm.utils.FileUtil;
@@ -53,11 +54,11 @@ public class CyanRNNModelEvals {
 	public InputLayer input;
 	public GRU gru;
 	public Attention att;
-	public OutputLayerWithHSoftMax output;
+	public OutputLayerWithCov output;
 	public DataLoader casLoader;
 	public OutputStreamWriter oswLog;
 	
-	public CyanRNNModelEvals(InputLayer input, GRU gru, Attention att, OutputLayerWithHSoftMax output
+	public CyanRNNModelEvals(InputLayer input, GRU gru, Attention att, OutputLayerWithCov output
 						, DataLoader casLoader, OutputStreamWriter oswLog) {
 		this.input = input;
 		this.gru = gru;
@@ -307,7 +308,7 @@ public class CyanRNNModelEvals {
     	GRU gru = new GRU(AlgConsHSoftmax.inDynSize, AlgConsHSoftmax.inFixedSize, AlgConsHSoftmax.hiddenSize, initer);
     	Attention att = new Attention(AlgConsHSoftmax.inDynSize, AlgConsHSoftmax.inFixedSize
     									, AlgConsHSoftmax.attSize, AlgConsHSoftmax.hiddenSize, initer);
-    	OutputLayerWithHSoftMax output = new OutputLayerWithHSoftMax(AlgConsHSoftmax.inDynSize
+    	OutputLayerWithCov output = new OutputLayerWithCov(AlgConsHSoftmax.inDynSize
     											, AlgConsHSoftmax.inFixedSize, AlgConsHSoftmax.attSize
     											, AlgConsHSoftmax.hiddenSize, AlgConsHSoftmax.cNum, initer);
     	

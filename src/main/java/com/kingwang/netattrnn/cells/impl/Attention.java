@@ -186,7 +186,7 @@ public class Attention extends Operator implements Cell, Serializable {
 	
 	public void bptt(Map<String, DoubleMatrix> acts, int lastT, Cell... cell) {
 
-		OutputLayerWithHSoftMax outLayer = (OutputLayerWithHSoftMax)cell[0];
+		OutputLayerWithCov outLayer = (OutputLayerWithCov)cell[0];
 		
 		for (int t = lastT; t > -1; t--) {
 			DoubleMatrix deltaY = acts.get("dy"+t);

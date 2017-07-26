@@ -47,12 +47,12 @@ stop_count=50
 node_size=32
 
 #input size: in_fixed_size--the static input, e.g., features from feature engineering, in_dyn_size--the dynamic input, e.g., learning embedding along with the tranining process#
-in_fixed_size=50
-in_dyn_size=1
+in_fixed_size=136
+in_dyn_size=10
 
 #size of parameter matrices: att_size--the size of attention layer, cov_size--the size of coverage, hidden_size--the size of hidden layer#
-att_size=50
-hidden_size=30
+att_size=10
+hidden_size=10
 cov_size=2
 
 #output size#
@@ -61,7 +61,7 @@ class_num=1
 window_size=20000
 
 #scaling parameter for continuous time feature(it better tunes to larger than 10, if the results go wrong)
-time_div=10
+time_div=1
 
 #thread number for parallel processing and corresponding sleep time for two consecutive threads
 thread_num=4

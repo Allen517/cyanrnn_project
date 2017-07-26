@@ -11,15 +11,17 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.jblas.DoubleMatrix;
+import org.jblas.MatrixFunctions;
 
 import com.kingwang.netattrnn.batchderv.impl.AttBatchDerivative;
 import com.kingwang.netattrnn.batchderv.impl.GRUBatchDerivative;
 import com.kingwang.netattrnn.batchderv.impl.InputBatchDerivative;
-import com.kingwang.netattrnn.batchderv.impl.OutputBatchWithHSoftmaxDerivative;
+import com.kingwang.netattrnn.batchderv.impl.OutputBatchWithTimeDerivative;
 import com.kingwang.netattrnn.cells.impl.Attention;
 import com.kingwang.netattrnn.cells.impl.GRU;
 import com.kingwang.netattrnn.cells.impl.InputLayer;
 import com.kingwang.netattrnn.cells.impl.OutputLayerWithHSoftMax;
+import com.kingwang.netattrnn.cells.impl.OutputLayerWithCov;
 import com.kingwang.netattrnn.comm.utils.CollectionHelper;
 import com.kingwang.netattrnn.comm.utils.Config;
 import com.kingwang.netattrnn.comm.utils.FileUtil;
@@ -38,12 +40,12 @@ import com.kingwang.netattrnn.utils.TmFeatExtractor;
 public class CyanRNN {
 	private InputLayer input;
 	private Attention att;
-	private OutputLayerWithHSoftMax output;
+	private OutputLayerWithCov output;
     private GRU gru;
     private InputBatchDerivative inputBatchDerv;
     private GRUBatchDerivative rnnBatchDerv;
     private AttBatchDerivative attBatchDerv;
-    private OutputBatchWithHSoftmaxDerivative outputBatchDerv;
+    private OutputBatchWithTimeDerivative outputBatchDerv;
     
     private Double tm_input;
     private Double tm_rnn;
@@ -59,11 +61,11 @@ public class CyanRNN {
     		rnnBatchDerv = new GRUBatchDerivative();
     	}
     	attBatchDerv = new AttBatchDerivative();
-    	outputBatchDerv = new OutputBatchWithHSoftmaxDerivative();
+    	outputBatchDerv = new OutputBatchWithTimeDerivative();
     	inputBatchDerv = new InputBatchDerivative();
         input = new InputLayer(nodeSize, inDynSize, initer);
         att = new Attention(inDynSize, inFixedSize, attSize, hiddenSize, initer);
-        output = new OutputLayerWithHSoftMax(inDynSize, inFixedSize, attSize, hiddenSize, cNum, initer);
+        output = new OutputLayerWithCov(inDynSize, inFixedSize, attSize, hiddenSize, cNum, initer);
         if(AlgConsHSoftmax.isContTraining) {
     		gru.loadCellParameter(AlgConsHSoftmax.lastModelFile);
     		att.loadCellParameter(AlgConsHSoftmax.lastModelFile);
@@ -197,6 +199,7 @@ public class CyanRNN {
             double prevTm = 0;
             int missCnt = 0;
             double tmInInput=0, tmInGru=0, tmInAtt=0, tmInOutput=0; 
+            DoubleMatrix tmList = new DoubleMatrix(infos.size()-1);
             for (int t=0; t<infos.size()-1; t++) {
             	String[] curInfo = infos.get(t).split(",");
             	String[] nextInfo = infos.get(t+1).split(",");
@@ -204,6 +207,7 @@ public class CyanRNN {
             	String curNd = curInfo[0];
             	String nxtNd = nextInfo[0];
             	double curTm = Double.parseDouble(curInfo[1]);
+            	double nxtTm = Double.parseDouble(nextInfo[1]);
             	if(!casLoader.getCodeMaps().containsKey(curNd)) {//if curNd isn't located in nodeDict
 //            		System.out.println("Missing node"+curNd);
             		missCnt++;
@@ -215,6 +219,9 @@ public class CyanRNN {
             		break;//TODO: how to solve "null" node
             	}
             	Node4Code nxtNd4Code = casLoader.getCodeMaps().get(nxtNd);
+            	//Set time gap
+            	double tmGap = (nxtTm-curTm)/AlgConsHSoftmax.tmDiv;
+            	tmList.put(t, tmGap);
             	//Set DoubleMatrix code & fixedFeat. It should be a code setter function here.
             	DoubleMatrix tmFeat = TmFeatExtractor.timeFeatExtractor(curTm, prevTm);
             	DoubleMatrix fixedFeat;
@@ -262,10 +269,17 @@ public class CyanRNN {
     	        DoubleMatrix pc = acts.get("pc"+t);
     	        MultiThreadCons.epochTrainError -= Math.log(py.get(nxtNdIdxInCls))/(infos.size()-1);
     	        MultiThreadCons.epochTrainError -= Math.log(pc.get(nodeCls))/(infos.size()-1);
-//                MultiThreadCons.epochTrainError += (logft-Math.log(py.get(nxtNdIdx)))/(infos.size()-1);
+    	        
+    	        DoubleMatrix decD = acts.get("decD"+t);
+    	        DoubleMatrix lambda = MatrixFunctions.exp(decD);
+    	        double logft = decD.add(output.Wd.mul(tmGap))
+    								.add(MatrixFunctions.pow(output.Wd, -1).mul(lambda.mul(-1))
+    										.mul(MatrixFunctions.exp(output.Wd.mul(tmGap)).sub(1))).get(0);
+                MultiThreadCons.epochTrainError -= logft/(infos.size()-1);
     	        
     	        prevTm = curTm;
         	}
+            acts.put("tmList", tmList);
 //            System.out.println("###Forwarding### time cost in input layer: "+tmInInput/1000.+"s, @"+iid);
 //            System.out.println("###Forwarding### time cost in gru layer: "+tmInGru/1000.+"s, @"+iid);
 //            System.out.println("###Forwarding### time cost in att layer: "+tmInAtt/1000.+"s, @"+iid);

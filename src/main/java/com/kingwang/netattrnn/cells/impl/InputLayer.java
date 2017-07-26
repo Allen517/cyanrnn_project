@@ -96,7 +96,7 @@ public class InputLayer extends Operator implements Cell, Serializable {
      */
     public void bptt(Map<String, DoubleMatrix> acts, int lastT, Cell... cell) {
     	
-    	OutputLayerWithHSoftMax outLayer = (OutputLayerWithHSoftMax) cell[0];
+    	OutputLayerWithCov outLayer = (OutputLayerWithCov) cell[0];
     	Attention att = (Attention) cell[1];
     	GRU gru = (GRU)cell[2];
     	
