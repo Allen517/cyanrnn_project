@@ -47,6 +47,8 @@ public class CyanRNN {
     private AttBatchDerivative attBatchDerv;
     private OutputBatchWithTimeDerivative outputBatchDerv;
     
+    static final String logFile = "log_cyanrnn";
+    
     private Double tm_input;
     private Double tm_rnn;
     private Double tm_att;
@@ -121,7 +123,7 @@ public class CyanRNN {
     
     private void train(DataLoader casLoader, String outFile) {
     	
-    	OutputStreamWriter oswLog = FileUtil.getOutputStreamWriter("log_cyanrnn", true);
+    	OutputStreamWriter oswLog = FileUtil.getOutputStreamWriter(logFile, true);
     	
     	double minCrsVal = Double.MAX_VALUE;
     	double minCrsValIter = -1;
@@ -417,7 +419,7 @@ public class CyanRNN {
     		MultiThreadCons.threadNum = Integer.parseInt(config.get("thread_num"));
     		MultiThreadCons.sleepSec = Double.parseDouble(config.get("sleep_sec"));
     		
-    		Config.printConf(config, "log");
+    		Config.printConf(config, logFile);
     	} catch(IOException e) {}
     	
         DataLoader cl = new DataLoader(AlgConsHSoftmax.casFile, AlgConsHSoftmax.crsValFile
