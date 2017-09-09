@@ -285,7 +285,7 @@ public class AttentionWithCov extends Operator implements Cell, Serializable {
 	
 	public void bptt(Map<String, DoubleMatrix> acts, int lastT, Cell... cell) {
 
-		OutputLayerWithCov outLayer = (OutputLayerWithCov)cell[0];
+		OutputLayerWithHSoftmax outLayer = (OutputLayerWithHSoftmax)cell[0];
 		
 		for (int t = lastT; t > -1; t--) {
 			DoubleMatrix deltaY = acts.get("dy"+t);
@@ -319,6 +319,7 @@ public class AttentionWithCov extends Operator implements Cell, Serializable {
             DoubleMatrix deltaT = deltaY.mmul(outLayer.Wty[cidx].transpose())
             						.add(deltaCls.mmul(outLayer.Wtc.transpose()))
             						.add(deltaD.mmul(outLayer.Wtd.transpose()));
+//        	DoubleMatrix deltaT = deltaD.mmul(outLayer.Wtd.transpose());
             if(t<lastT) {
             	int lateESize = Math.min(t+2, AlgConsHSoftmax.windowSize);
             	deltaT = deltaT.add(
@@ -336,6 +337,8 @@ public class AttentionWithCov extends Operator implements Cell, Serializable {
 					            		.add(deltaCls.mmul(outLayer.Wsc.transpose()))
 					            		.add(deltaAt.mmul(Wst.transpose()))
 					            		.add(deltaD.mmul(outLayer.Wsd.transpose()));
+//            DoubleMatrix deltaS = deltaAt.mmul(Wst.transpose())
+//            						.add(deltaD.mmul(outLayer.Wsd.transpose()));
             acts.put("ds"+t, deltaS);
 			
 			// delta alpha

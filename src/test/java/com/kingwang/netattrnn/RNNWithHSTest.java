@@ -1,9 +1,9 @@
 /**   
- * @package	com.kingwang.netattrnn
- * @File		CyanRNNWithOnlyTimeAndTimeTest.java
- * @Crtdate	Feb 9, 2017
+ * @package	com.kingwang.rnncdm
+ * @File		CellTest.java
+ * @Crtdate	May 23, 2016
  *
- * Copyright (c) 2017 by <a href="mailto:wangyongqing.casia@gmail.com">King Wang</a>.   
+ * Copyright (c) 2016 by <a href="mailto:wangyongqing.casia@gmail.com">King Wang</a>.   
  */
 package com.kingwang.netattrnn;
 
@@ -15,14 +15,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.jblas.DoubleMatrix;
-import org.jblas.MatrixFunctions;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.kingwang.netattrnn.cells.impl.AttentionWithOnlyTime;
-import com.kingwang.netattrnn.cells.impl.GRUWithOnlyTime;
-import com.kingwang.netattrnn.cells.impl.InputLayerWithOnlyTime;
-import com.kingwang.netattrnn.cells.impl.OutputLayerWithOnlyTime;
+import com.kingwang.netattrnn.cells.baselines.rnn.impl.GRURNN;
+import com.kingwang.netattrnn.cells.baselines.rnn.impl.InputLayerRNN;
+import com.kingwang.netattrnn.cells.baselines.rnn.impl.OutputLayerRNNWithHS;
 import com.kingwang.netattrnn.cons.AlgConsHSoftmax;
 import com.kingwang.netattrnn.utils.MatIniter;
 import com.kingwang.netattrnn.utils.MatIniter.Type;
@@ -31,21 +29,19 @@ import com.kingwang.netattrnn.utils.MatIniter.Type;
  *
  * @author King Wang
  * 
- * Feb 9, 2017 12:48:29 AM
+ * May 23, 2016 10:16:59 AM
  * @version 1.0
  */
-public class CyanRNNWithOnlyTimeTest {
+public class RNNWithHSTest {
+
 	private int inDynSize;
 	private int inFixedSize;
 	private int outSize; 
-	private int outoutSize;
-	private int covSize;
 	private int nodeSize;
 	private int[] clsRcd;
-	private InputLayerWithOnlyTime input;
-	private GRUWithOnlyTime gru;
-	private AttentionWithOnlyTime att;
-	private OutputLayerWithOnlyTime output;
+	private InputLayerRNN input;
+	private GRURNN gru;
+	private OutputLayerRNNWithHS output;
 	private Map<String, DoubleMatrix> nodeCode;
 	private Map<String, DoubleMatrix> acts = new HashMap<>();
 	private List<Double> y1_arr = new ArrayList<>();
@@ -57,8 +53,6 @@ public class CyanRNNWithOnlyTimeTest {
 		inDynSize = 10;
 		inFixedSize = 1;
 		outSize = 8;
-		outoutSize = 7;
-		covSize = 3;
 		nodeSize = 5;
 		clsRcd = new int[2];
 		clsRcd[0] = 0;
@@ -67,15 +61,13 @@ public class CyanRNNWithOnlyTimeTest {
 		AlgConsHSoftmax.nodeSizeInCls = new int[2];
 		AlgConsHSoftmax.nodeSizeInCls[0] = 2;
 		AlgConsHSoftmax.nodeSizeInCls[1] = 3;
+		AlgConsHSoftmax.windowSize = 2;
 		AlgConsHSoftmax.biasInitVal = 0;
 		
 		AlgConsHSoftmax.rnnType="gru";
-		input = new InputLayerWithOnlyTime(nodeSize, inDynSize, new MatIniter(Type.Test, 0, 0, 0));
-        att = new AttentionWithOnlyTime(inDynSize, inFixedSize, outSize, outoutSize
-        							, covSize, new MatIniter(Type.Test, 0, 0, 0));
-		gru = new GRUWithOnlyTime(inDynSize, inFixedSize, outSize, new MatIniter(Type.Test, 0, 0, 0)); // set cell
-		output = new OutputLayerWithOnlyTime(inDynSize, inFixedSize, outSize, outoutSize
-									, AlgConsHSoftmax.cNum, new MatIniter(Type.Test, 0, 0, 0));
+		input = new InputLayerRNN(nodeSize, inDynSize, new MatIniter(Type.Test, 0, 0, 0));
+		gru = new GRURNN(inDynSize, inFixedSize, outSize, new MatIniter(Type.Test, 0, 0, 0)); // set cell
+		output = new OutputLayerRNNWithHS(outSize, AlgConsHSoftmax.cNum, new MatIniter(Type.Test, 0, 0, 0));
 		
 		DoubleMatrix Wx = new DoubleMatrix(nodeSize, inDynSize);
 		nodeCode = new HashMap<>();
@@ -137,18 +129,21 @@ public class CyanRNNWithOnlyTimeTest {
 	    	DoubleMatrix fixedFeat = DoubleMatrix.zeros(1, inFixedSize);
 			fixedFeat.put(0, 1);
 	    	
+//	    	DoubleMatrix code = nodeCode.get(ndId);
 			DoubleMatrix code = new DoubleMatrix(1);
 			code.put(0, Double.parseDouble(ndId));
 	    	acts.put("code"+t, code);
 	    	acts.put("fixedFeat"+t, fixedFeat);
 	    	
-	    	int nodeCls = clsRcd[0];
+	    	int nodeCls = clsRcd[t];
 	    	
 	    	input.active(t, acts);
 	        gru.active(t, acts);
-	        att.active(t, acts);
 	        output.active(t, acts, nodeCls);
 	       
+//          DoubleMatrix hatYt = output.yDecode(acts.get("s" + t));
+//	        DoubleMatrix predictYt = Activer.softmax(hatYt);
+//	        acts.put("py" + t, predictYt);
 	        DoubleMatrix y = new DoubleMatrix(1, AlgConsHSoftmax.nodeSizeInCls[nodeCls]);
 	        if(nxtNdId.equalsIgnoreCase("1")) {
 	        	nxtNdIdx = 0;
@@ -167,44 +162,52 @@ public class CyanRNNWithOnlyTimeTest {
 	private void gradientTestAndretActualGradient(List<String> nodes, DoubleMatrix mat
 													, int reviseLoc, int targetT, double delta) {
 		
-		DoubleMatrix tmList = acts.get("tmList");
-		
 		y0_arr = new ArrayList<>();
 		y1_arr = new ArrayList<>();
 		
+		acts.clear();
 		mat = mat.put(reviseLoc, mat.get(reviseLoc)-delta); // reset Wxi
 		calcOneTurn(nodes);
 		for(int t=0; t<targetT+1; t++) {
-			double tmGap = tmList.get(t);
-
-			DoubleMatrix decD = acts.get("decD"+t);
-	        DoubleMatrix lambda = MatrixFunctions.exp(decD);
-	        double logft = decD.add(output.Wd.mul(tmGap))
-								.add(MatrixFunctions.pow(output.Wd, -1).mul(lambda.mul(-1))
-										.mul(MatrixFunctions.exp(output.Wd.mul(tmGap)).sub(1))).get(0);
-			y1_arr.add(logft);
+			String nxtNdId = nodes.get(t+1);
+	    	int nxtNdIdx = -1;
+	    	int nodeCls = clsRcd[t];
+	    	if(nxtNdId.equalsIgnoreCase("1")) {
+	        	nxtNdIdx = 0;
+	        }
+	        if(nxtNdId.equalsIgnoreCase("0")) {
+	        	nxtNdIdx = 1;
+	        }
+			DoubleMatrix py = acts.get("py" + t);
+			DoubleMatrix pc = acts.get("pc" + t);
+			y1_arr.add(Math.log(py.get(nxtNdIdx))+Math.log(pc.get(nodeCls)));
 		}
 		//original
+		acts.clear();
 		mat = mat.put(reviseLoc, mat.get(reviseLoc)+2*delta);
 		calcOneTurn(nodes);
 		for(int t=0; t<targetT+1; t++) {
-			double tmGap = tmList.get(t);
-			
-			DoubleMatrix decD = acts.get("decD"+t);
-	        DoubleMatrix lambda = MatrixFunctions.exp(decD);
-	        double logft = decD.add(output.Wd.mul(tmGap))
-								.add(MatrixFunctions.pow(output.Wd, -1).mul(lambda.mul(-1))
-										.mul(MatrixFunctions.exp(output.Wd.mul(tmGap)).sub(1))).get(0);
-			y0_arr.add(logft);
+			String nxtNdId = nodes.get(t+1);
+	    	int nxtNdIdx = -1;
+	    	int nodeCls = clsRcd[t];
+	    	if(nxtNdId.equalsIgnoreCase("1")) {
+	        	nxtNdIdx = 0;
+	        }
+	        if(nxtNdId.equalsIgnoreCase("0")) {
+	        	nxtNdIdx = 1;
+	        }
+			DoubleMatrix py = acts.get("py" + t);
+			DoubleMatrix pc = acts.get("pc" + t);
+			y0_arr.add(Math.log(py.get(nxtNdIdx))+Math.log(pc.get(nodeCls)));
 		}
 		 
 		// test
+		acts.clear();
 		mat = mat.put(reviseLoc, mat.get(reviseLoc)-delta); // set back to the original Wxi
 		calcOneTurn(nodes);
 		output.bptt(acts, targetT);
-		att.bptt(acts, targetT, output);
-		gru.bptt(acts, targetT, att);
-		input.bptt(acts, targetT, output, att, gru);
+		gru.bptt(acts, targetT, output);
+		input.bptt(acts, targetT, gru);
 	}
 	
 	/**
@@ -216,8 +219,6 @@ public class CyanRNNWithOnlyTimeTest {
 		inDynSize = 3;
 		inFixedSize = 1;
 		outSize = 2;
-		outoutSize = 3;
-		covSize = 4;
 		nodeSize = 5;
 		
 		double delta = 10e-7;
@@ -227,226 +228,31 @@ public class CyanRNNWithOnlyTimeTest {
 		ndList.add("2");
 		ndList.add("1");
 		ndList.add("0");
-		ndList.add("1");
 		
-		// set tmList
-		DoubleMatrix tmList = new DoubleMatrix(3);
-		tmList.put(0, 2.);
-		tmList.put(1, 3.);
-		tmList.put(2, 4.);
-		acts.put("tmList", tmList);
+//		AlgConsHSoftmax.nodeSizeInCls = new int[2];
+//		AlgConsHSoftmax.nodeSizeInCls[0] = 0;
+//		AlgConsHSoftmax.nodeSizeInCls[0] = 1;
+		
+//		List<Double> tmList = new ArrayList<>();
+//		tmList.add(2.);
+//		tmList.add(3.);
 		
 		DoubleMatrix fixedFeat = DoubleMatrix.zeros(1, inFixedSize);
 		fixedFeat.put(0, 1);
+//		input.tmFeat.put(1, .5);
+//		DoubleMatrix x = new DoubleMatrix(1, 10);
+//		x.put(2, 1);
+//		nodeVec.put(3, x);
+//		nodeVec.put(2, x);
+//		nodeVec.put(1, x);
 		
 		MatIniter initer = new MatIniter(Type.Uniform, 1, 0, 0);
 		
-		input = new InputLayerWithOnlyTime(nodeSize, inDynSize, initer);
-		gru = new GRUWithOnlyTime(inDynSize, inFixedSize, outSize, initer);
-		att = new AttentionWithOnlyTime(inDynSize, inFixedSize, outSize, outoutSize, covSize, initer);
-		output = new OutputLayerWithOnlyTime(inDynSize, inFixedSize, outSize, outoutSize, AlgConsHSoftmax.cNum, initer);
+		input = new InputLayerRNN(nodeSize, inDynSize, initer);
+		gru = new GRURNN(inDynSize, inFixedSize, outSize, initer);
+		output = new OutputLayerRNNWithHS(outSize, AlgConsHSoftmax.cNum, initer);
 		int reviseLoc = 1;
-		int targetT = 2;
-		
-		int attRevLoc=0;
-		
-		AlgConsHSoftmax.windowSize = 2;
-		
-		/**
-		 * Wxd
-		 */
-		System.out.println("Wxd test");
-		gradientTestAndretActualGradient(ndList, output.Wxd, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWxd_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltaWxd_2 += tmp/2/delta;
-		}
-		System.out.println(deltaWxd_2+","+(-acts.get("dWxd").get(reviseLoc)));
-		assertEquals(deltaWxd_2, -acts.get("dWxd").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wtd
-		 */
-		System.out.println("Wtd test");
-		gradientTestAndretActualGradient(ndList, output.Wtd, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWtd_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltaWtd_2 += tmp/2/delta;
-		}
-		System.out.println(deltaWtd_2+","+(-acts.get("dWtd").get(reviseLoc)));
-		assertEquals(deltaWtd_2, -acts.get("dWtd").get(reviseLoc), 10e-7);
-		
-		/**
-		 * bd
-		 */
-		System.out.println("bd test");
-		gradientTestAndretActualGradient(ndList, output.bd, 0, targetT, delta);
-		// get the actual partial y/partial x
-		double deltabd_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltabd_2 += tmp/2/delta;
-		}
-		System.out.println(deltabd_2+","+(-acts.get("dbd").get(0)));
-		assertEquals(deltabd_2, -acts.get("dbd").get(0), 10e-7);
-		
-		/**
-		 * Wd
-		 */
-		System.out.println("Wd test");
-		gradientTestAndretActualGradient(ndList, output.Wd, 0, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWd_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltaWd_2 += tmp/2/delta;
-		}
-		System.out.println(deltaWd_2+","+(-acts.get("dWd").get(0)));
-		assertEquals(deltaWd_2, -acts.get("dWd").get(0), 10e-7);
-		
-		/**
-		 * Wav
-		 */
-		System.out.println("Wav test");
-		gradientTestAndretActualGradient(ndList, att.Wav, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWav_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltaWav_2 += tmp/2/delta;
-		}
-		System.out.println(deltaWav_2+","+(-acts.get("dWav").get(reviseLoc)));
-		assertEquals(deltaWav_2, -acts.get("dWav").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wvv
-		 */
-		System.out.println("Wvv test");
-		gradientTestAndretActualGradient(ndList, att.Wvv, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWvv_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltaWvv_2 += tmp/2/delta;
-		}
-		System.out.println(deltaWvv_2+","+(-acts.get("dWvv").get(reviseLoc)));
-		assertEquals(deltaWvv_2, -acts.get("dWvv").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Whv
-		 */
-		System.out.println("Whv test");
-		gradientTestAndretActualGradient(ndList, att.Whv, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWhv_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltaWhv_2 += tmp/2/delta;
-		}
-		System.out.println(deltaWhv_2+","+(-acts.get("dWhv").get(reviseLoc)));
-		assertEquals(deltaWhv_2, -acts.get("dWhv").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wtv
-		 */
-		System.out.println("Wtv test");
-		gradientTestAndretActualGradient(ndList, att.Wtv, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWtv_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltaWtv_2 += tmp/2/delta;
-		}
-		System.out.println(deltaWtv_2+","+(-acts.get("dWtv").get(reviseLoc)));
-		assertEquals(deltaWtv_2, -acts.get("dWtv").get(reviseLoc), 10e-7);
-		
-		/**
-		 * bv
-		 */
-		System.out.println("bv test");
-		gradientTestAndretActualGradient(ndList, att.bv, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltabv_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltabv_2 += tmp/2/delta;
-		}
-		System.out.println(deltabv_2+","+(-acts.get("dbv").get(reviseLoc)));
-		assertEquals(deltabv_2, -acts.get("dbv").get(reviseLoc), 10e-7);
-		
-		/**
-		 * V
-		 */
-		System.out.println("V test");
-		gradientTestAndretActualGradient(ndList, att.V, attRevLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaV_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltaV_2 += tmp/2/delta;
-		}
-		System.out.println(deltaV_2+","+(-acts.get("dV").get(attRevLoc)));
-		assertEquals(deltaV_2, -acts.get("dV").get(attRevLoc), 10e-7);
-		
-		/**
-		 * W
-		 */
-		System.out.println("W test");
-		gradientTestAndretActualGradient(ndList, att.W, attRevLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaW_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltaW_2 += tmp/2/delta;
-		}
-		System.out.println(deltaW_2+","+(-acts.get("dW").get(attRevLoc)));
-		assertEquals(deltaW_2, -acts.get("dW").get(attRevLoc), 10e-7);
-		
-		/**
-		 * U
-		 */
-		System.out.println("U test");
-		gradientTestAndretActualGradient(ndList, att.U, attRevLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaU_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltaU_2 += tmp/2/delta;
-		}
-		System.out.println(deltaU_2+","+(-acts.get("dU").get(attRevLoc)));
-		assertEquals(deltaU_2, -acts.get("dU").get(attRevLoc), 10e-7);
-		
-		/**
-		 * Z
-		 */
-		System.out.println("Z test");
-		gradientTestAndretActualGradient(ndList, att.Z, attRevLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaZ_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltaZ_2 += tmp/2/delta;
-		}
-		System.out.println(deltaZ_2+","+(-acts.get("dZ").get(attRevLoc)));
-		assertEquals(deltaZ_2, -acts.get("dZ").get(attRevLoc), 10e-7);
-		
-		/**
-		 * bs
-		 */
-		System.out.println("bs test");
-		gradientTestAndretActualGradient(ndList, att.bs, attRevLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltabs_2 = 0;
-		for(int t=0; t<targetT+1; t++) {
-			double tmp = y0_arr.get(t)-y1_arr.get(t);
-			deltabs_2 += tmp/2/delta;
-		}
-		System.out.println(deltabs_2+","+(-acts.get("dbs").get(attRevLoc)));
-		assertEquals(deltabs_2, -acts.get("dbs").get(attRevLoc), 10e-7);
+		int targetT = 1;
 		
 		/**
 		 * Wxr
@@ -616,84 +422,73 @@ public class CyanRNNWithOnlyTimeTest {
 			double tmp = y0_arr.get(t)-y1_arr.get(t);
 			deltabz_2 += tmp/2/delta;
 		}
-		System.out.println(deltabz_2+","+(-acts.get("dbz").get(reviseLoc)));
-		assertEquals(deltabz_2, -acts.get("dbz").get(reviseLoc), 10e-7);
+		System.out.println(deltabz_2+","+(-acts.get("dbz").get(0)));
+		assertEquals(deltabz_2, -acts.get("dbz").get(0), 10e-7);
+		
+//		/**
+//		 * Whd
+//		 */
+//		System.out.println("Whd test");
+//		gradientTestAndretActualGradient(ndList, tmList, cell.Whd, reviseLoc, targetT, delta);
+//		// get the actual partial y/partial x
+//		double deltaWhd_2 = 0;
+//		for(int t=0; t<targetT+1; t++) {
+//			double tmp = y0_arr.get(t)-y1_arr.get(t);
+//			deltaWhd_2 += tmp/2/delta;
+//		}
+//		System.out.println(deltaWhd_2+","+(-acts.get("dWhd").get(reviseLoc)));
+//		assertEquals(deltaWhd_2, -acts.get("dWhd").get(reviseLoc), 10e-7);
+//		
+//		/**
+//		 * bd
+//		 */
+//		System.out.println("bd test");
+//		gradientTestAndretActualGradient(ndList, tmList, cell.bd, reviseLoc, targetT, delta);
+//		// get the actual partial y/partial x
+//		double deltabd_2 = 0;
+//		for(int t=0; t<targetT+1; t++) {
+//			double tmp = y0_arr.get(t)-y1_arr.get(t);
+//			deltabd_2 += tmp/2/delta;
+//		}
+//		System.out.println(deltabd_2+","+(-acts.get("dbd").get(0)));
+//		assertEquals(deltabd_2, -acts.get("dbd").get(0), 10e-7);
 		
 		/**
-		 * Wxt
+		 * Wsy
 		 */
-		System.out.println("Wxt test");
-		gradientTestAndretActualGradient(ndList, att.Wxt, reviseLoc, targetT, delta);
+		System.out.println("Wsy test");
+		gradientTestAndretActualGradient(ndList, output.Wsy[0], reviseLoc, targetT, delta);
 		// get the actual partial y/partial x
-		double deltaWxt = 0;
+		double deltaWhy_2 = 0;
+		double[] tmpy = new double[targetT+1];
 		for(int t=0; t<targetT+1; t++) {
-			deltaWxt += y0_arr.get(t)-y1_arr.get(t);
+	    	int nodeCls = clsRcd[t];
+			tmpy[nodeCls] += y0_arr.get(t)-y1_arr.get(t);
 		}
-		deltaWxt = deltaWxt/2/delta;
-		System.out.println(deltaWxt+","+(-acts.get("dWxt").get(reviseLoc)));
-		assertEquals(deltaWxt, -acts.get("dWxt").get(reviseLoc), 10e-7);
+		deltaWhy_2 = tmpy[0]/2/delta;
+		System.out.println(deltaWhy_2+","+(-acts.get("dWsy0").get(reviseLoc)));
+		assertEquals(deltaWhy_2, -acts.get("dWsy0").get(reviseLoc), 10e-7);
 		
 		/**
-		 * Wdt
+		 * by
 		 */
-		System.out.println("Wdt test");
-		gradientTestAndretActualGradient(ndList, att.Wdt, reviseLoc, targetT, delta);
+		System.out.println("by test");
+		gradientTestAndretActualGradient(ndList, output.by[1], reviseLoc, targetT, delta);
 		// get the actual partial y/partial x
-		double deltaWdt = 0;
+		double deltaby_2 = 0;
+		tmpy = new double[targetT+1];
 		for(int t=0; t<targetT+1; t++) {
-			deltaWdt += y0_arr.get(t)-y1_arr.get(t);
+			int nodeCls = clsRcd[t];
+			tmpy[nodeCls] += y0_arr.get(t)-y1_arr.get(t);
 		}
-		deltaWdt = deltaWdt/2/delta;
-		System.out.println(deltaWdt+","+(-acts.get("dWdt").get(reviseLoc)));
-		assertEquals(deltaWdt, -acts.get("dWdt").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wtt
-		 */
-		System.out.println("Wtt test");
-		gradientTestAndretActualGradient(ndList, att.Wtt, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWtt = 0;
-		for(int t=0; t<targetT+1; t++) {
-			deltaWtt += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltaWtt = deltaWtt/2/delta;
-		System.out.println(deltaWtt+","+(-acts.get("dWtt").get(reviseLoc)));
-		assertEquals(deltaWtt, -acts.get("dWtt").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wst
-		 */
-		System.out.println("Wst test");
-		gradientTestAndretActualGradient(ndList, att.Wst, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWst = 0;
-		for(int t=0; t<targetT+1; t++) {
-			deltaWst += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltaWst = deltaWst/2/delta;
-		System.out.println(deltaWst+","+(-acts.get("dWst").get(reviseLoc)));
-		assertEquals(deltaWst, -acts.get("dWst").get(reviseLoc), 10e-7);
-		
-		/**
-		 * bt
-		 */
-		System.out.println("bt test");
-		gradientTestAndretActualGradient(ndList, att.bt, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltabt = 0;
-		for(int t=0; t<targetT+1; t++) {
-			deltabt += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltabt = deltabt/2/delta;
-		System.out.println(deltabt+","+(-acts.get("dbt").get(reviseLoc)));
-		assertEquals(deltabt, -acts.get("dbt").get(reviseLoc), 10e-7);
+		deltaby_2 += tmpy[1]/2/delta;
+		System.out.println(deltaby_2+","+(-acts.get("dby1").get(reviseLoc)));
+		assertEquals(deltaby_2, -acts.get("dby1").get(reviseLoc), 10e-7);
 		
 		/**
 		 * Wx
 		 */
 		System.out.println("Wx test");
-		reviseLoc = 2;
 		gradientTestAndretActualGradient(ndList, input.Wx, reviseLoc, targetT, delta);
 		// get the actual partial y/partial x
 		double deltaWx_2 = 0;
@@ -718,4 +513,22 @@ public class CyanRNNWithOnlyTimeTest {
 		System.out.println(deltabx_2+","+(-acts.get("dbx").get(reviseLoc)));
 		assertEquals(deltabx_2, -acts.get("dbx").get(reviseLoc), 10e-7);
 	}
+	
+//
+//	/**
+//	 * Test method for {@link com.kingwang.rnncdm.lstm.Cell#decode(org.jblas.DoubleMatrix)}.
+//	 */
+//	@Test
+//	public void testDecode() {
+//		fail("Not yet implemented");
+//	}
+//
+//	/**
+//	 * Test method for {@link com.kingwang.rnncdm.lstm.Cell#loadRNNModel(java.lang.String)}.
+//	 */
+//	@Test
+//	public void testLoadRNNModel() {
+//		fail("Not yet implemented");
+//	}
+
 }

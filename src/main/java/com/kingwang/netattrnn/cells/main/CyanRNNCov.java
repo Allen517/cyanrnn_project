@@ -11,15 +11,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.jblas.DoubleMatrix;
+import org.jblas.MatrixFunctions;
 
-import com.kingwang.netattrnn.batchderv.impl.AttBatchDerivative;
+import com.kingwang.netattrnn.batchderv.impl.AttWithCovBatchDerivative;
 import com.kingwang.netattrnn.batchderv.impl.GRUBatchDerivative;
 import com.kingwang.netattrnn.batchderv.impl.InputBatchDerivative;
 import com.kingwang.netattrnn.batchderv.impl.OutputBatchWithHSoftmaxDerivative;
-import com.kingwang.netattrnn.cells.impl.Attention;
-import com.kingwang.netattrnn.cells.impl.GRU;
-import com.kingwang.netattrnn.cells.impl.InputLayer;
-import com.kingwang.netattrnn.cells.impl.OutputLayerWithHSoftMax;
+import com.kingwang.netattrnn.cells.impl.AttentionWithCov;
+import com.kingwang.netattrnn.cells.impl.GRUWithCov;
+import com.kingwang.netattrnn.cells.impl.InputLayerWithCov;
+import com.kingwang.netattrnn.cells.impl.OutputLayerWithHSoftmax;
 import com.kingwang.netattrnn.comm.utils.CollectionHelper;
 import com.kingwang.netattrnn.comm.utils.Config;
 import com.kingwang.netattrnn.comm.utils.FileUtil;
@@ -29,20 +30,23 @@ import com.kingwang.netattrnn.cons.MultiThreadCons;
 import com.kingwang.netattrnn.dataset.DataLoader;
 import com.kingwang.netattrnn.dataset.Node4Code;
 import com.kingwang.netattrnn.dataset.SeqLoader;
-import com.kingwang.netattrnn.evals.CyanRNNNoTimeModelEvals;
+import com.kingwang.netattrnn.evals.CyanRNNCovModelEvals;
 import com.kingwang.netattrnn.utils.InputEncoder;
 import com.kingwang.netattrnn.utils.MatIniter;
 import com.kingwang.netattrnn.utils.MatIniter.Type;
+import com.kingwang.netattrnn.utils.TmFeatExtractor;
 
-public class CyanRNNNoTime {
-	private InputLayer input;
-	private Attention att;
-	private OutputLayerWithHSoftMax output;
-    private GRU gru;
+public class CyanRNNCov {
+	private InputLayerWithCov input;
+	private AttentionWithCov att;
+	private OutputLayerWithHSoftmax output;
+    private GRUWithCov gru;
     private InputBatchDerivative inputBatchDerv;
     private GRUBatchDerivative rnnBatchDerv;
-    private AttBatchDerivative attBatchDerv;
+    private AttWithCovBatchDerivative attBatchDerv;
     private OutputBatchWithHSoftmaxDerivative outputBatchDerv;
+    
+    static final String logFile = "log_cyanrnn_cov";
     
     private Double tm_input;
     private Double tm_rnn;
@@ -51,18 +55,18 @@ public class CyanRNNNoTime {
     
     private DataLoader casLoader;
     
-    public CyanRNNNoTime(int nodeSize, int inDynSize, int inFixedSize, int attSize, int hiddenSize 
-    				, int cNum, DataLoader casLoader, MatIniter initer) {
+    public CyanRNNCov(int nodeSize, int inDynSize, int inFixedSize, int attSize, int hiddenSize 
+    				, int covSize, int cNum, DataLoader casLoader, MatIniter initer) {
     	if(AlgConsHSoftmax.rnnType.equalsIgnoreCase("gru")) {
-    		gru = new GRU(inDynSize, inFixedSize, attSize, initer); 
+    		gru = new GRUWithCov(inDynSize, inFixedSize, attSize, initer); 
     		rnnBatchDerv = new GRUBatchDerivative();
     	}
-    	attBatchDerv = new AttBatchDerivative();
+    	attBatchDerv = new AttWithCovBatchDerivative();
     	outputBatchDerv = new OutputBatchWithHSoftmaxDerivative();
     	inputBatchDerv = new InputBatchDerivative();
-        input = new InputLayer(nodeSize, inDynSize, initer);
-        att = new Attention(inDynSize, inFixedSize, attSize, hiddenSize, initer);
-        output = new OutputLayerWithHSoftMax(inDynSize, inFixedSize, attSize, hiddenSize, cNum, initer);
+        input = new InputLayerWithCov(nodeSize, inDynSize, initer);
+        att = new AttentionWithCov(inDynSize, inFixedSize, attSize, hiddenSize, covSize, initer);
+        output = new OutputLayerWithHSoftmax(inDynSize, inFixedSize, attSize, hiddenSize, cNum, initer);
         if(AlgConsHSoftmax.isContTraining) {
     		gru.loadCellParameter(AlgConsHSoftmax.lastModelFile);
     		att.loadCellParameter(AlgConsHSoftmax.lastModelFile);
@@ -160,7 +164,7 @@ public class CyanRNNNoTime {
             if(epochT%AlgConsHSoftmax.validCycle==0) {
 //            	double validRes = RNNModelEvals.validationInOtherWay(input, cell, AlgConsHSoftmax.nodeSize
 //            						, casLoader.getCrsValSeq(), oswLog);
-            	CyanRNNNoTimeModelEvals rnnEvals = new CyanRNNNoTimeModelEvals(input, gru, att, output, casLoader, oswLog);
+            	CyanRNNCovModelEvals rnnEvals = new CyanRNNCovModelEvals(input, gru, att, output, casLoader, oswLog);
             	double validRes = rnnEvals.validationOnIntegration();
             	if(validRes<minCrsVal) {
             		minCrsVal = validRes;
@@ -196,6 +200,7 @@ public class CyanRNNNoTime {
             double prevTm = 0;
             int missCnt = 0;
             double tmInInput=0, tmInGru=0, tmInAtt=0, tmInOutput=0; 
+            DoubleMatrix tmList = new DoubleMatrix(infos.size()-1);
             for (int t=0; t<infos.size()-1; t++) {
             	String[] curInfo = infos.get(t).split(",");
             	String[] nextInfo = infos.get(t+1).split(",");
@@ -203,6 +208,7 @@ public class CyanRNNNoTime {
             	String curNd = curInfo[0];
             	String nxtNd = nextInfo[0];
             	double curTm = Double.parseDouble(curInfo[1]);
+            	double nxtTm = Double.parseDouble(nextInfo[1]);
             	if(!casLoader.getCodeMaps().containsKey(curNd)) {//if curNd isn't located in nodeDict
 //            		System.out.println("Missing node"+curNd);
             		missCnt++;
@@ -214,9 +220,11 @@ public class CyanRNNNoTime {
             		break;//TODO: how to solve "null" node
             	}
             	Node4Code nxtNd4Code = casLoader.getCodeMaps().get(nxtNd);
+            	//Set time gap
+            	double tmGap = (nxtTm-curTm)/AlgConsHSoftmax.tmDiv;
+            	tmList.put(t, tmGap);
             	//Set DoubleMatrix code & fixedFeat. It should be a code setter function here.
-//            	DoubleMatrix tmFeat = TmFeatExtractor.timeFeatExtractor(curTm, prevTm);
-            	DoubleMatrix tmFeat = new DoubleMatrix(1);
+            	DoubleMatrix tmFeat = TmFeatExtractor.timeFeatExtractor(curTm, prevTm);
             	DoubleMatrix fixedFeat;
 				try {
 					fixedFeat = InputEncoder.setFixedFeat(t, AlgConsHSoftmax.inFixedSize, tmFeat);
@@ -262,10 +270,17 @@ public class CyanRNNNoTime {
     	        DoubleMatrix pc = acts.get("pc"+t);
     	        MultiThreadCons.epochTrainError -= Math.log(py.get(nxtNdIdxInCls))/(infos.size()-1);
     	        MultiThreadCons.epochTrainError -= Math.log(pc.get(nodeCls))/(infos.size()-1);
-//                MultiThreadCons.epochTrainError += (logft-Math.log(py.get(nxtNdIdx)))/(infos.size()-1);
+    	        
+    	        DoubleMatrix decD = acts.get("decD"+t);
+    	        DoubleMatrix lambda = MatrixFunctions.exp(decD);
+    	        double logft = decD.add(output.Wd.mul(tmGap))
+    								.add(MatrixFunctions.pow(output.Wd, -1).mul(lambda.mul(-1))
+    										.mul(MatrixFunctions.exp(output.Wd.mul(tmGap)).sub(1))).get(0);
+                MultiThreadCons.epochTrainError -= logft/(infos.size()-1);
     	        
     	        prevTm = curTm;
         	}
+            acts.put("tmList", tmList);
 //            System.out.println("###Forwarding### time cost in input layer: "+tmInInput/1000.+"s, @"+iid);
 //            System.out.println("###Forwarding### time cost in gru layer: "+tmInGru/1000.+"s, @"+iid);
 //            System.out.println("###Forwarding### time cost in att layer: "+tmInAtt/1000.+"s, @"+iid);
@@ -396,6 +411,7 @@ public class CyanRNNNoTime {
     		AlgConsHSoftmax.inDynSize = Integer.parseInt(config.get("in_dyn_size"));
     		AlgConsHSoftmax.hiddenSize = Integer.parseInt(config.get("hidden_size"));
     		AlgConsHSoftmax.attSize = Integer.parseInt(config.get("att_size"));
+    		AlgConsHSoftmax.covSize = Integer.parseInt(config.get("cov_size"));
     		AlgConsHSoftmax.epoch = Integer.parseInt(config.get("epoch"));
     		AlgConsHSoftmax.validCycle = Integer.parseInt(config.get("validation_cycle"));
     		AlgConsHSoftmax.minibatchCnt = Integer.parseInt(config.get("no_of_minibatch_values"));
@@ -403,14 +419,15 @@ public class CyanRNNNoTime {
     		MultiThreadCons.threadNum = Integer.parseInt(config.get("thread_num"));
     		MultiThreadCons.sleepSec = Double.parseDouble(config.get("sleep_sec"));
     		
-    		Config.printConf(config, "log");
+    		Config.printConf(config, logFile);
     	} catch(IOException e) {}
     	
         DataLoader cl = new DataLoader(AlgConsHSoftmax.casFile, AlgConsHSoftmax.crsValFile
         			, AlgConsHSoftmax.freqFile, AlgConsHSoftmax.cNum);
-        CyanRNNNoTime rnn = new CyanRNNNoTime(AlgConsHSoftmax.nodeSize, AlgConsHSoftmax.inDynSize, AlgConsHSoftmax.inFixedSize
-        					, AlgConsHSoftmax.attSize, AlgConsHSoftmax.hiddenSize, AlgConsHSoftmax.cNum
-        					, cl, new MatIniter(Type.SVD));
+        CyanRNNCov rnn = new CyanRNNCov(AlgConsHSoftmax.nodeSize, AlgConsHSoftmax.inDynSize
+        					, AlgConsHSoftmax.inFixedSize, AlgConsHSoftmax.attSize
+        					, AlgConsHSoftmax.hiddenSize, AlgConsHSoftmax.covSize
+        					, AlgConsHSoftmax.cNum, cl, new MatIniter(Type.SVD));
         rnn.train(cl, AlgConsHSoftmax.outFile);
     }
 

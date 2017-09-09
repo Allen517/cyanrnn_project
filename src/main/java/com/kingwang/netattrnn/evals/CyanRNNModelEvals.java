@@ -18,12 +18,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.jblas.DoubleMatrix;
+import org.jblas.MatrixFunctions;
 
 import com.kingwang.netattrnn.cells.impl.Attention;
 import com.kingwang.netattrnn.cells.impl.GRU;
 import com.kingwang.netattrnn.cells.impl.InputLayer;
-import com.kingwang.netattrnn.cells.impl.OutputLayerWithHSoftMax;
-import com.kingwang.netattrnn.cells.impl.OutputLayerWithCov;
+import com.kingwang.netattrnn.cells.impl.OutputLayerWithHSoftmax;
 import com.kingwang.netattrnn.comm.utils.CollectionHelper;
 import com.kingwang.netattrnn.comm.utils.Config;
 import com.kingwang.netattrnn.comm.utils.FileUtil;
@@ -54,11 +54,11 @@ public class CyanRNNModelEvals {
 	public InputLayer input;
 	public GRU gru;
 	public Attention att;
-	public OutputLayerWithCov output;
+	public OutputLayerWithHSoftmax output;
 	public DataLoader casLoader;
 	public OutputStreamWriter oswLog;
 	
-	public CyanRNNModelEvals(InputLayer input, GRU gru, Attention att, OutputLayerWithCov output
+	public CyanRNNModelEvals(InputLayer input, GRU gru, Attention att, OutputLayerWithHSoftmax output
 						, DataLoader casLoader, OutputStreamWriter oswLog) {
 		this.input = input;
 		this.gru = gru;
@@ -142,6 +142,7 @@ public class CyanRNNModelEvals {
 				String curNd = curInfo[0];
             	String nxtNd = nextInfo[0];
             	double curTm = Double.parseDouble(curInfo[1]);
+            	double nxtTm = Double.parseDouble(nextInfo[1]);
             	if(!casLoader.getCodeMaps().containsKey(curNd)) {//if curNd isn't located in nodeDict
 //	            		System.out.println("Missing node"+curNd);
             		missCnt++;
@@ -153,6 +154,8 @@ public class CyanRNNModelEvals {
             		break;//TODO: how to solve "null" node
             	}
             	Node4Code nxtNd4Code = casLoader.getCodeMaps().get(nxtNd);
+            	// Set time gap
+				double tmGap = (nxtTm - curTm) / AlgConsHSoftmax.tmDiv;
             	//Set DoubleMatrix code & fixedFeat. It should be a code setter function here.
             	DoubleMatrix tmFeat = TmFeatExtractor.timeFeatExtractor(curTm, prevTm);
             	DoubleMatrix fixedFeat;
@@ -187,6 +190,15 @@ public class CyanRNNModelEvals {
     	        DoubleMatrix pc = acts.get("pc"+t);
                 cas_logLkHd -= Math.log(py.get(nxtNdIdxInCls))/(infos.size()-1);
                 cas_logLkHd -= Math.log(pc.get(nodeCls))/(infos.size()-1);
+                
+                DoubleMatrix decD = acts.get("decD" + t);
+				DoubleMatrix lambda = MatrixFunctions.exp(decD);
+				double logft = decD.add(output.Wd.mul(tmGap))
+								.add(MatrixFunctions
+								.pow(output.Wd, -1)
+								.mul(lambda.mul(-1))
+								.mul(MatrixFunctions.exp(output.Wd.mul(tmGap)).sub(1))).get(0);
+				cas_logLkHd -= logft / (infos.size() - 1);
 
                 DoubleMatrix prob = py.mul(pc.get(nodeCls));
                 DoubleMatrix[] otherProb = new DoubleMatrix[AlgConsHSoftmax.cNum-1];
@@ -308,7 +320,7 @@ public class CyanRNNModelEvals {
     	GRU gru = new GRU(AlgConsHSoftmax.inDynSize, AlgConsHSoftmax.inFixedSize, AlgConsHSoftmax.hiddenSize, initer);
     	Attention att = new Attention(AlgConsHSoftmax.inDynSize, AlgConsHSoftmax.inFixedSize
     									, AlgConsHSoftmax.attSize, AlgConsHSoftmax.hiddenSize, initer);
-    	OutputLayerWithCov output = new OutputLayerWithCov(AlgConsHSoftmax.inDynSize
+    	OutputLayerWithHSoftmax output = new OutputLayerWithHSoftmax(AlgConsHSoftmax.inDynSize
     											, AlgConsHSoftmax.inFixedSize, AlgConsHSoftmax.attSize
     											, AlgConsHSoftmax.hiddenSize, AlgConsHSoftmax.cNum, initer);
     	

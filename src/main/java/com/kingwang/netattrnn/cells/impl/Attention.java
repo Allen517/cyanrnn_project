@@ -186,11 +186,12 @@ public class Attention extends Operator implements Cell, Serializable {
 	
 	public void bptt(Map<String, DoubleMatrix> acts, int lastT, Cell... cell) {
 
-		OutputLayerWithCov outLayer = (OutputLayerWithCov)cell[0];
+		OutputLayerWithHSoftmax outLayer = (OutputLayerWithHSoftmax)cell[0];
 		
 		for (int t = lastT; t > -1; t--) {
 			DoubleMatrix deltaY = acts.get("dy"+t);
 			DoubleMatrix deltaCls = acts.get("dCls"+t);
+			DoubleMatrix deltaD = acts.get("dd"+t);
 			//get cidx
 			DoubleMatrix c = acts.get("cls" + t);
     		int cidx = 0;
@@ -203,7 +204,8 @@ public class Attention extends Operator implements Cell, Serializable {
     		// delta t
     		DoubleMatrix vecT = acts.get("t"+t);
             DoubleMatrix deltaT = deltaY.mmul(outLayer.Wty[cidx].transpose())
-            						.add(deltaCls.mmul(outLayer.Wtc.transpose()));
+            						.add(deltaCls.mmul(outLayer.Wtc.transpose()))
+            						.add(deltaD.mmul(outLayer.Wtd.transpose()));
             if(t<lastT) {
             	DoubleMatrix lateDat = acts.get("dAt"+(t+1));
             	DoubleMatrix lateDgs = acts.get("dgs"+(t+1));
@@ -217,7 +219,8 @@ public class Attention extends Operator implements Cell, Serializable {
             // delta s
             DoubleMatrix deltaS = deltaY.mmul(outLayer.Wsy[cidx].transpose())
             		.add(deltaCls.mmul(outLayer.Wsc.transpose()))
-            		.add(deltaAt.mmul(Wst.transpose()));
+            		.add(deltaAt.mmul(Wst.transpose()))
+            		.add(deltaD.mmul(outLayer.Wsd.transpose()));
             acts.put("ds"+t, deltaS);
 			
 			// delta alpha

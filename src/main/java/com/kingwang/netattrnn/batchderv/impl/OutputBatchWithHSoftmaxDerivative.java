@@ -41,7 +41,10 @@ public class OutputBatchWithHSoftmaxDerivative implements BatchDerivative, Seria
 	public DoubleMatrix dWsc;
 	public DoubleMatrix dbc;
 	
-	public DoubleMatrix dWhd;
+	public DoubleMatrix dWxd;
+	public DoubleMatrix dWdd;
+	public DoubleMatrix dWsd;
+	public DoubleMatrix dWtd;
 	public DoubleMatrix dbd;
 	
 	public DoubleMatrix dWd;
@@ -59,7 +62,10 @@ public class OutputBatchWithHSoftmaxDerivative implements BatchDerivative, Seria
 		dWsc = null;
 		dbc = null;
 		
-		dWhd = null;
+		dWxd = null;
+		dWdd = null;
+		dWsd = null;
+		dWtd = null;
 		dbd = null;
 		
 		dWd = null;
@@ -78,14 +84,17 @@ public class OutputBatchWithHSoftmaxDerivative implements BatchDerivative, Seria
 		DoubleMatrix _dWsc = acts.get("dWsc");
 		DoubleMatrix _dbc = acts.get("dbc");
 		
-		DoubleMatrix _dWhd = acts.get("dWhd");
+		DoubleMatrix _dWxd = acts.get("dWxd");
+		DoubleMatrix _dWdd = acts.get("dWdd");
+		DoubleMatrix _dWsd = acts.get("dWsd");
+		DoubleMatrix _dWtd = acts.get("dWtd");
 		DoubleMatrix _dbd = acts.get("dbd");
 		
 		DoubleMatrix _dWd = acts.get("dWd");
 		
 		if(dWxy==null || dWdy==null || dWty==null || dWsy==null || dby==null
 				|| dWxc==null || dWdc==null || dWtc==null || dWsc==null || dbc==null
-				|| dWhd==null || dbd==null || dWd==null) {
+				|| dWxd==null || dWdd==null || dWsd==null || dWtd==null || dbd==null || dWd==null) {
 			dWxy = new DoubleMatrix[AlgConsHSoftmax.cNum];
 			dWdy = new DoubleMatrix[AlgConsHSoftmax.cNum];
 			dWty = new DoubleMatrix[AlgConsHSoftmax.cNum];
@@ -98,7 +107,10 @@ public class OutputBatchWithHSoftmaxDerivative implements BatchDerivative, Seria
 			dWsc = new DoubleMatrix(_dWsc.rows, _dWsc.columns);
 			dbc = new DoubleMatrix(_dbc.rows, _dbc.columns);
 			
-			dWhd = new DoubleMatrix(_dWhd.rows, _dWhd.columns);
+			dWxd = new DoubleMatrix(_dWxd.rows, _dWxd.columns);
+			dWdd = new DoubleMatrix(_dWdd.rows, _dWdd.columns);
+			dWsd = new DoubleMatrix(_dWsd.rows, _dWsd.columns);
+			dWtd = new DoubleMatrix(_dWtd.rows, _dWtd.columns);
 			dbd = new DoubleMatrix(_dbd.rows, _dbd.columns);
 			
 			dWd = new DoubleMatrix(_dWd.rows, _dWd.columns);
@@ -136,7 +148,10 @@ public class OutputBatchWithHSoftmaxDerivative implements BatchDerivative, Seria
 		dWsc = dWsc.add(_dWsc).mul(avgFac);
 		dbc = dbc.add(_dbc).mul(avgFac);
 		
-		dWhd = dWhd.add(_dWhd).mul(avgFac);
+		dWxd = dWxd.add(_dWxd).mul(avgFac);
+		dWdd = dWdd.add(_dWdd).mul(avgFac);
+		dWsd = dWsd.add(_dWsd).mul(avgFac);
+		dWtd = dWtd.add(_dWtd).mul(avgFac);
 		dbd = dbd.add(_dbd).mul(avgFac);
 		
 		dWd = dWd.add(_dWd).mul(avgFac);

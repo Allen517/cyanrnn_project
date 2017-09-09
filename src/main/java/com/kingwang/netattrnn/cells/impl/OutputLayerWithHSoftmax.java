@@ -36,7 +36,7 @@ import com.kingwang.netattrnn.utils.MatIniter.Type;
  * Dec 6, 2016 8:01:19 PM
  * @version 1.0
  */
-public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializable {
+public class OutputLayerWithHSoftmax extends Operator implements Cell, Serializable {
 
 	/**
 	 * 
@@ -76,7 +76,28 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
     public DoubleMatrix hd2Wtc;
     public DoubleMatrix hd2bc;
     
-    public OutputLayerWithHSoftMax(int inDynSize, int inFixedSize, int attSize, int hiddenSize
+    public DoubleMatrix Wd;
+    public DoubleMatrix Wxd;
+    public DoubleMatrix Wdd;
+    public DoubleMatrix Wsd;
+    public DoubleMatrix Wtd;
+    public DoubleMatrix bd;
+    
+    public DoubleMatrix hdWd;
+    public DoubleMatrix hdWxd;
+    public DoubleMatrix hdWdd;
+    public DoubleMatrix hdWsd;
+    public DoubleMatrix hdWtd;
+    public DoubleMatrix hdbd;
+    
+    public DoubleMatrix hd2Wd;
+    public DoubleMatrix hd2Wxd;
+    public DoubleMatrix hd2Wdd;
+    public DoubleMatrix hd2Wsd;
+    public DoubleMatrix hd2Wtd;
+    public DoubleMatrix hd2bd;
+    
+    public OutputLayerWithHSoftmax(int inDynSize, int inFixedSize, int attSize, int hiddenSize
     								, int cNum, MatIniter initer) {
         if (initer.getType() == Type.Uniform) {
         	this.Wxc = initer.uniform(inDynSize, cNum);
@@ -84,20 +105,41 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
         	this.Wsc = initer.uniform(attSize, cNum);
             this.Wtc = initer.uniform(hiddenSize, cNum);
             this.bc = new DoubleMatrix(1, cNum).add(AlgConsHSoftmax.biasInitVal);
+            
+            this.Wxd = initer.uniform(inDynSize, 1);
+            this.Wdd = initer.uniform(inFixedSize, 1);
+            this.Wsd = initer.uniform(attSize, 1);
+            this.Wtd = initer.uniform(hiddenSize, 1);
+            this.bd = new DoubleMatrix(1).add(AlgConsHSoftmax.biasInitVal);
         } else if (initer.getType() == Type.Gaussian) {
         	this.Wxc = initer.gaussian(inDynSize, cNum);
         	this.Wdc = initer.gaussian(inFixedSize, cNum);
         	this.Wsc = initer.gaussian(attSize, cNum);
             this.Wtc = initer.gaussian(hiddenSize, cNum);
             this.bc = new DoubleMatrix(1, cNum).add(AlgConsHSoftmax.biasInitVal);
+            
+            this.Wxd = initer.gaussian(inDynSize, 1);
+            this.Wdd = initer.gaussian(inFixedSize, 1);
+            this.Wsd = initer.gaussian(attSize, 1);
+            this.Wtd = initer.gaussian(hiddenSize, 1);
+            this.bd = new DoubleMatrix(1).add(AlgConsHSoftmax.biasInitVal);
         } else if (initer.getType() == Type.SVD) {
         	this.Wxc = initer.svd(inDynSize, cNum);
         	this.Wdc = initer.svd(inFixedSize, cNum);
         	this.Wsc = initer.svd(attSize, cNum);
             this.Wtc = initer.svd(hiddenSize, cNum);
             this.bc = new DoubleMatrix(1, cNum).add(AlgConsHSoftmax.biasInitVal);
+            
+            this.Wxd = initer.svd(inDynSize, 1);
+            this.Wdd = initer.svd(inFixedSize, 1);
+            this.Wsd = initer.svd(attSize, 1);
+            this.Wtd = initer.svd(hiddenSize, 1);
+            this.bd = new DoubleMatrix(1).add(AlgConsHSoftmax.biasInitVal);
         } else if(initer.getType() == Type.Test) {
         }
+        this.Wd = initer.uniform(1, 1);
+        this.hdWd = new DoubleMatrix(1);
+        this.hd2Wd = new DoubleMatrix(1);
         
         this.hdWxc = new DoubleMatrix(inDynSize, cNum);
         this.hdWdc = new DoubleMatrix(inFixedSize, cNum);
@@ -105,11 +147,23 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
         this.hdWtc = new DoubleMatrix(hiddenSize, cNum);
         this.hdbc = new DoubleMatrix(1, cNum);
         
+        this.hdWxd = new DoubleMatrix(inDynSize, 1);
+        this.hdWdd = new DoubleMatrix(inFixedSize, 1);
+        this.hdWsd = new DoubleMatrix(attSize, 1);
+        this.hdWtd = new DoubleMatrix(hiddenSize, 1);
+        this.hdbd = new DoubleMatrix(1, 1);
+        
         this.hd2Wxc = new DoubleMatrix(inDynSize, cNum);
         this.hd2Wdc = new DoubleMatrix(inFixedSize, cNum);
         this.hd2Wsc = new DoubleMatrix(attSize, cNum);
         this.hd2Wtc = new DoubleMatrix(hiddenSize, cNum);
         this.hd2bc = new DoubleMatrix(1, cNum);
+        
+        this.hd2Wxd = new DoubleMatrix(inDynSize, 1);
+        this.hd2Wdd = new DoubleMatrix(inFixedSize, 1);
+        this.hd2Wsd = new DoubleMatrix(attSize, 1);
+        this.hd2Wtd = new DoubleMatrix(hiddenSize, 1);
+        this.hd2bd = new DoubleMatrix(1, 1);
         
         this.Wxy = new DoubleMatrix[cNum];
         this.Wdy = new DoubleMatrix[cNum];
@@ -182,6 +236,9 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
         DoubleMatrix predictYt = Activer.softmax(hatYt);
         acts.put("py" + t, predictYt);
         acts.put("pc" + t, predictCt);
+
+        DoubleMatrix d = x.mmul(Wxd).add(fixedFeat.mmul(Wdd)).add(vecT.mmul(Wtd)).add(s.mmul(Wsd)).add(bd);
+        acts.put("decD" + t, d);
     }
     
     public void bptt(Map<String, DoubleMatrix> acts, int lastT, Cell... cell) {
@@ -207,8 +264,26 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
     	DoubleMatrix dWsc = new DoubleMatrix(Wsc.rows, Wsc.columns);
     	DoubleMatrix dbc = new DoubleMatrix(bc.rows, bc.columns);
     	
+    	DoubleMatrix dWxd = new DoubleMatrix(Wxd.rows, Wxd.columns);
+    	DoubleMatrix dWdd = new DoubleMatrix(Wdd.rows, Wdd.columns);
+    	DoubleMatrix dWsd = new DoubleMatrix(Wsd.rows, Wsd.columns);
+    	DoubleMatrix dWtd = new DoubleMatrix(Wtd.rows, Wtd.columns);
+        DoubleMatrix dbd = new DoubleMatrix(bd.rows, bd.columns);
+    	
+        DoubleMatrix dWd = new DoubleMatrix(Wd.rows, Wd.columns); 
+        
     	Set<Integer> histCls = new HashSet<>();
+    	DoubleMatrix tmList = acts.get("tmList");
     	for (int t = lastT; t > -1; t--) {
+    		// delta d
+    		double tmGap = tmList.get(t);
+        	DoubleMatrix decD = acts.get("decD"+t);
+	        DoubleMatrix lambda = MatrixFunctions.exp(decD);
+        	DoubleMatrix deltaD = lambda.div(Wd)
+        						.mul(MatrixFunctions.exp(Wd.mul(tmGap)).sub(1))
+    							.sub(1);
+            acts.put("dd" + t, deltaD);
+            
     		// delta c
     		DoubleMatrix pc = acts.get("pc" + t);
     		DoubleMatrix c = acts.get("cls" + t);
@@ -243,6 +318,20 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
             dWtc = dWtc.add(vecT.mmul(deltaCls));
             dWsc = dWsc.add(s.mmul(deltaCls));
             dbc = dbc.add(deltaCls);
+            
+            //delta Whd & bd
+            dWxd = dWxd.add(x.mmul(deltaD));
+            dWdd = dWdd.add(fixedFeat.mmul(deltaD));
+            dWsd = dWsd.add(s.mmul(deltaD));
+            dWtd = dWtd.add(vecT.mmul(deltaD));
+            dbd = dbd.add(deltaD);
+            
+            //delta Wd
+            dWd = dWd.add(MatrixFunctions.pow(Wd, -2).mul(lambda.mul(-1))
+		            				.mul(MatrixFunctions.exp(Wd.mul(tmGap)).sub(1))
+		            		.add(MatrixFunctions.pow(Wd, -1).mul(tmGap).mul(lambda)
+		            				.mul(MatrixFunctions.exp(Wd.mul(tmGap))))
+		            		.sub(tmGap));
     	}
     	
     	for(int cid : histCls) {
@@ -257,6 +346,14 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
     	acts.put("dWtc", dWtc);
     	acts.put("dWsc", dWsc);
     	acts.put("dbc", dbc);
+    	
+    	acts.put("dWxd", dWxd);
+    	acts.put("dWdd", dWdd);
+    	acts.put("dWsd", dWsd);
+    	acts.put("dWtd", dWtd);
+        acts.put("dbd", dbd);
+        
+        acts.put("dWd", dWd);
     }
     
     public void updateParametersByAdaGrad(BatchDerivative derv, double lr) {
@@ -295,6 +392,14 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
     	hdWsc = hdWsc.add(MatrixFunctions.pow(batchDerv.dWsc, 2.));
 		hdbc = hdbc.add(MatrixFunctions.pow(batchDerv.dbc, 2.));
 		
+		hdWxd = hdWxd.add(MatrixFunctions.pow(batchDerv.dWxd, 2.));
+		hdWdd = hdWdd.add(MatrixFunctions.pow(batchDerv.dWdd, 2.));
+		hdWsd = hdWsd.add(MatrixFunctions.pow(batchDerv.dWsd, 2.));
+		hdWtd = hdWtd.add(MatrixFunctions.pow(batchDerv.dWtd, 2.));
+        hdbd = hdbd.add(MatrixFunctions.pow(batchDerv.dbd, 2.));
+        
+        hdWd = hdWd.add(MatrixFunctions.pow(batchDerv.dWd, 2.));
+		
 		Wxc = Wxc.sub(batchDerv.dWxc.mul(
 				MatrixFunctions.pow(MatrixFunctions.sqrt(hdWxc).add(eps),-1.).mul(lr)));
 		Wdc = Wdc.sub(batchDerv.dWdc.mul(
@@ -305,7 +410,20 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
 				MatrixFunctions.pow(MatrixFunctions.sqrt(hdWsc).add(eps),-1.).mul(lr)));
 		bc = bc.sub(batchDerv.dbc.mul(
 				MatrixFunctions.pow(MatrixFunctions.sqrt(hdbc).add(eps),-1.).mul(lr)));
+		
+		Wxd = Wxd.sub(batchDerv.dWxd.mul(
+        		MatrixFunctions.pow(MatrixFunctions.sqrt(hdWxd).add(eps),-1.).mul(lr)));
+		Wdd = Wdd.sub(batchDerv.dWdd.mul(
+        		MatrixFunctions.pow(MatrixFunctions.sqrt(hdWdd).add(eps),-1.).mul(lr)));
+		Wsd = Wsd.sub(batchDerv.dWsd.mul(
+        		MatrixFunctions.pow(MatrixFunctions.sqrt(hdWsd).add(eps),-1.).mul(lr)));
+		Wtd = Wtd.sub(batchDerv.dWtd.mul(
+        		MatrixFunctions.pow(MatrixFunctions.sqrt(hdWtd).add(eps),-1.).mul(lr)));
+        bd = bd.sub(batchDerv.dbd.mul(
+        		MatrixFunctions.pow(MatrixFunctions.sqrt(hdbd).add(eps),-1.).mul(lr)));
         
+        Wd = Wd.sub(batchDerv.dWd.mul(
+        		MatrixFunctions.pow(MatrixFunctions.sqrt(hdWd).add(eps),-1.).mul(lr)));
     }
     
     public void updateParametersByAdam(BatchDerivative derv, double lr
@@ -365,11 +483,25 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
 		hd2Wsc = hd2Wsc.mul(beta2).add(MatrixFunctions.pow(batchDerv.dWsc, 2.).mul(1 - beta2));
 		hd2bc = hd2bc.mul(beta2).add(MatrixFunctions.pow(batchDerv.dbc, 2.).mul(1 - beta2));
 		
+		hd2Wxd = hd2Wxd.mul(beta2).add(MatrixFunctions.pow(batchDerv.dWxd, 2.).mul(1 - beta2));
+		hd2Wdd = hd2Wdd.mul(beta2).add(MatrixFunctions.pow(batchDerv.dWdd, 2.).mul(1 - beta2));
+		hd2Wsd = hd2Wsd.mul(beta2).add(MatrixFunctions.pow(batchDerv.dWsd, 2.).mul(1 - beta2));
+		hd2Wtd = hd2Wtd.mul(beta2).add(MatrixFunctions.pow(batchDerv.dWtd, 2.).mul(1 - beta2));
+		hd2bd = hd2bd.mul(beta2).add(MatrixFunctions.pow(batchDerv.dbd, 2.).mul(1 - beta2));
+		hd2Wd = hd2Wd.mul(beta2).add(MatrixFunctions.pow(batchDerv.dWd, 2.).mul(1 - beta2));
+		
 		hdWxc = hdWxc.mul(beta1).add(batchDerv.dWxc.mul(1 - beta1));
 		hdWdc = hdWdc.mul(beta1).add(batchDerv.dWdc.mul(1 - beta1));
 		hdWtc = hdWtc.mul(beta1).add(batchDerv.dWtc.mul(1 - beta1));
 		hdWsc = hdWsc.mul(beta1).add(batchDerv.dWsc.mul(1 - beta1));
 		hdbc = hdbc.mul(beta1).add(batchDerv.dbc.mul(1 - beta1));
+		
+		hdWxd = hdWxd.mul(beta1).add(batchDerv.dWxd.mul(1 - beta1));
+		hdWdd = hdWdd.mul(beta1).add(batchDerv.dWdd.mul(1 - beta1));
+		hdWsd = hdWsd.mul(beta1).add(batchDerv.dWsd.mul(1 - beta1));
+		hdWtd = hdWtd.mul(beta1).add(batchDerv.dWtd.mul(1 - beta1));
+		hdbd = hdbd.mul(beta1).add(batchDerv.dbd.mul(1 - beta1));
+		hdWd = hdWd.mul(beta1).add(batchDerv.dWd.mul(1 - beta1));
 		
 		Wxc = Wxc.sub(
 				hdWxc.mul(biasBeta1).mul(lr)
@@ -391,10 +523,37 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
 				MatrixFunctions.pow(MatrixFunctions.sqrt(hd2bc.mul(biasBeta2)).add(eps), -1.)
 				.mul(hdbc.mul(biasBeta1)).mul(lr)
 				);
+		
+		Wxd = Wxd.sub(
+				MatrixFunctions.pow(MatrixFunctions.sqrt(hd2Wxd.mul(biasBeta2)).add(eps), -1.)
+				.mul(hdWxd.mul(biasBeta1)).mul(lr)
+				);
+		Wdd = Wdd.sub(
+				MatrixFunctions.pow(MatrixFunctions.sqrt(hd2Wdd.mul(biasBeta2)).add(eps), -1.)
+				.mul(hdWdd.mul(biasBeta1)).mul(lr)
+				);
+		Wsd = Wsd.sub(
+				MatrixFunctions.pow(MatrixFunctions.sqrt(hd2Wsd.mul(biasBeta2)).add(eps), -1.)
+				.mul(hdWsd.mul(biasBeta1)).mul(lr)
+				);
+		Wtd = Wtd.sub(
+				MatrixFunctions.pow(MatrixFunctions.sqrt(hd2Wtd.mul(biasBeta2)).add(eps), -1.)
+				.mul(hdWtd.mul(biasBeta1)).mul(lr)
+				);
+		bd = bd.sub(
+				MatrixFunctions.pow(MatrixFunctions.sqrt(hd2bd.mul(biasBeta2)).add(eps), -1.)
+				.mul(hdbd.mul(biasBeta1)).mul(lr)
+				);
+		
+		Wd = Wd.sub(
+				MatrixFunctions.pow(MatrixFunctions.sqrt(hd2Wd.mul(biasBeta2)).add(eps), -1.)
+				.mul(hdWd.mul(biasBeta1)).mul(lr)
+				);
     }
     
     public DoubleMatrix yDecode(DoubleMatrix ht, int cidx) {
-		return ht.mmul(Wsy[cidx]).add(by[cidx]);
+//		return ht.mmul(Wsy[cidx]).add(by[cidx]);
+    	return null;
 	}
 
 	/* (non-Javadoc)
@@ -429,6 +588,19 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
 		writeMatrix(osw, Wsc);
 		FileUtil.writeln(osw, "bc");
 		writeMatrix(osw, bc);
+		
+		FileUtil.writeln(osw, "Wxd");
+		writeMatrix(osw, Wxd);
+		FileUtil.writeln(osw, "Wdd");
+		writeMatrix(osw, Wdd);
+		FileUtil.writeln(osw, "Wsd");
+		writeMatrix(osw, Wsd);
+		FileUtil.writeln(osw, "Wtd");
+		writeMatrix(osw, Wtd);
+		FileUtil.writeln(osw, "bd");
+		writeMatrix(osw, bd);
+		FileUtil.writeln(osw, "Wd");
+		writeMatrix(osw, Wd);
 	}
 
 	/* (non-Javadoc)
@@ -467,7 +639,8 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
 						typeStr = "by";
 						cidx = Integer.parseInt(elems[0].substring(2));
 					}
-					String[] typeList = {"Wxc", "Wdc", "Wtc", "Wsc", "bsc"};
+					String[] typeList = {"Wxc", "Wdc", "Wtc", "Wsc", "bsc"
+								, "Wxd", "Wdd", "Wsd", "Wtd", "bd", "Wd"};
 					for(String tStr : typeList) {
 						if(elems[0].contains(tStr)) {
 							typeStr = tStr;
@@ -489,6 +662,12 @@ public class OutputLayerWithHSoftMax extends Operator implements Cell, Serializa
 					case Wtc: this.Wtc = matrixSetter(row, elems, this.Wtc); break;
 					case Wsc: this.Wsc = matrixSetter(row, elems, this.Wsc); break;
 					case bsc: this.bc = matrixSetter(row, elems, this.bc); break;
+					case Wxd: this.Wxd = matrixSetter(row, elems, this.Wxd); break;
+					case Wdd: this.Wdd = matrixSetter(row, elems, this.Wdd); break;
+					case Wsd: this.Wsd = matrixSetter(row, elems, this.Wsd); break;
+					case Wtd: this.Wtd = matrixSetter(row, elems, this.Wtd); break;
+					case bd: this.bd = matrixSetter(row, elems, this.bd); break;
+					case Wd: this.Wd = matrixSetter(row, elems, this.Wd); break;
 				}
 				row++;
 			}

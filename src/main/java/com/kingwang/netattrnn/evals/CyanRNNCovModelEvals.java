@@ -23,7 +23,7 @@ import org.jblas.MatrixFunctions;
 import com.kingwang.netattrnn.cells.impl.AttentionWithCov;
 import com.kingwang.netattrnn.cells.impl.GRUWithCov;
 import com.kingwang.netattrnn.cells.impl.InputLayerWithCov;
-import com.kingwang.netattrnn.cells.impl.OutputLayerWithCov;
+import com.kingwang.netattrnn.cells.impl.OutputLayerWithHSoftmax;
 import com.kingwang.netattrnn.comm.utils.CollectionHelper;
 import com.kingwang.netattrnn.comm.utils.Config;
 import com.kingwang.netattrnn.comm.utils.FileUtil;
@@ -47,19 +47,19 @@ import com.kingwang.netattrnn.utils.TmFeatExtractor;
  *         May 22, 2016 5:03:33 PM
  * @version 1.0
  */
-public class CyanRNNWithTimeModelEvals {
+public class CyanRNNCovModelEvals {
 
 	public static Double logLkHd = .0;
 	public static Double mrr = .0;
 	public InputLayerWithCov input;
 	public GRUWithCov gru;
 	public AttentionWithCov att;
-	public OutputLayerWithCov output;
+	public OutputLayerWithHSoftmax output;
 	public DataLoader casLoader;
 	public OutputStreamWriter oswLog;
 
-	public CyanRNNWithTimeModelEvals(InputLayerWithCov input, GRUWithCov gru,
-			AttentionWithCov att, OutputLayerWithCov output,
+	public CyanRNNCovModelEvals(InputLayerWithCov input, GRUWithCov gru,
+			AttentionWithCov att, OutputLayerWithHSoftmax output,
 			DataLoader casLoader, OutputStreamWriter oswLog) {
 		this.input = input;
 		this.gru = gru;
@@ -145,21 +145,15 @@ public class CyanRNNWithTimeModelEvals {
 				String nxtNd = nextInfo[0];
 				double curTm = Double.parseDouble(curInfo[1]);
 				double nxtTm = Double.parseDouble(nextInfo[1]);
-				if (!casLoader.getCodeMaps().containsKey(curNd)) {// if curNd
-																	// isn't
-																	// located
-																	// in
-																	// nodeDict
+				// if curNd isn't located in nodeDict
+				if (!casLoader.getCodeMaps().containsKey(curNd)) {
 				// System.out.println("Missing node"+curNd);
 					missCnt++;
 					curNd = "null";
 					break;// TODO: how to solve "null" node
 				}
-				if (!casLoader.getCodeMaps().containsKey(nxtNd)) {// if curNd
-																	// isn't
-																	// located
-																	// in
-																	// nodeDict
+				// if curNd isn't located in nodeDict
+				if (!casLoader.getCodeMaps().containsKey(nxtNd)) {
 					curNd = "null";
 					break;// TODO: how to solve "null" node
 				}
@@ -208,13 +202,11 @@ public class CyanRNNWithTimeModelEvals {
 
 				DoubleMatrix decD = acts.get("decD" + t);
 				DoubleMatrix lambda = MatrixFunctions.exp(decD);
-				double logft = decD
-						.add(output.Wd.mul(tmGap))
-						.add(MatrixFunctions
+				double logft = decD.add(output.Wd.mul(tmGap))
+								.add(MatrixFunctions
 								.pow(output.Wd, -1)
 								.mul(lambda.mul(-1))
-								.mul(MatrixFunctions.exp(output.Wd.mul(tmGap))
-										.sub(1))).get(0);
+								.mul(MatrixFunctions.exp(output.Wd.mul(tmGap)).sub(1))).get(0);
 				cas_logLkHd -= logft / (infos.size() - 1);
 
 				DoubleMatrix prob = py.mul(pc.get(nodeCls));
@@ -355,7 +347,7 @@ public class CyanRNNWithTimeModelEvals {
 		AttentionWithCov att = new AttentionWithCov(AlgConsHSoftmax.inDynSize,
 				AlgConsHSoftmax.inFixedSize, AlgConsHSoftmax.attSize,
 				AlgConsHSoftmax.hiddenSize, AlgConsHSoftmax.covSize, initer);
-		OutputLayerWithCov output = new OutputLayerWithCov(
+		OutputLayerWithHSoftmax output = new OutputLayerWithHSoftmax(
 				AlgConsHSoftmax.inDynSize, AlgConsHSoftmax.inFixedSize,
 				AlgConsHSoftmax.attSize, AlgConsHSoftmax.hiddenSize,
 				AlgConsHSoftmax.cNum, initer);
@@ -370,7 +362,7 @@ public class CyanRNNWithTimeModelEvals {
 			input.loadCellParameter(AlgConsHSoftmax.lastModelFile);
 		}
 
-		CyanRNNWithTimeModelEvals eval = new CyanRNNWithTimeModelEvals(input,
+		CyanRNNCovModelEvals eval = new CyanRNNCovModelEvals(input,
 				gru, att, output, casLoader, oswLog);
 
 		eval.validationOnIntegration();

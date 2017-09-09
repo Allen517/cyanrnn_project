@@ -16,12 +16,11 @@ import org.jblas.MatrixFunctions;
 import com.kingwang.netattrnn.batchderv.impl.AttBatchDerivative;
 import com.kingwang.netattrnn.batchderv.impl.GRUBatchDerivative;
 import com.kingwang.netattrnn.batchderv.impl.InputBatchDerivative;
-import com.kingwang.netattrnn.batchderv.impl.OutputBatchWithTimeDerivative;
+import com.kingwang.netattrnn.batchderv.impl.OutputBatchWithHSoftmaxDerivative;
 import com.kingwang.netattrnn.cells.impl.Attention;
 import com.kingwang.netattrnn.cells.impl.GRU;
 import com.kingwang.netattrnn.cells.impl.InputLayer;
-import com.kingwang.netattrnn.cells.impl.OutputLayerWithHSoftMax;
-import com.kingwang.netattrnn.cells.impl.OutputLayerWithCov;
+import com.kingwang.netattrnn.cells.impl.OutputLayerWithHSoftmax;
 import com.kingwang.netattrnn.comm.utils.CollectionHelper;
 import com.kingwang.netattrnn.comm.utils.Config;
 import com.kingwang.netattrnn.comm.utils.FileUtil;
@@ -40,12 +39,12 @@ import com.kingwang.netattrnn.utils.TmFeatExtractor;
 public class CyanRNN {
 	private InputLayer input;
 	private Attention att;
-	private OutputLayerWithCov output;
+	private OutputLayerWithHSoftmax output;
     private GRU gru;
     private InputBatchDerivative inputBatchDerv;
     private GRUBatchDerivative rnnBatchDerv;
     private AttBatchDerivative attBatchDerv;
-    private OutputBatchWithTimeDerivative outputBatchDerv;
+    private OutputBatchWithHSoftmaxDerivative outputBatchDerv;
     
     static final String logFile = "log_cyanrnn";
     
@@ -63,11 +62,11 @@ public class CyanRNN {
     		rnnBatchDerv = new GRUBatchDerivative();
     	}
     	attBatchDerv = new AttBatchDerivative();
-    	outputBatchDerv = new OutputBatchWithTimeDerivative();
+    	outputBatchDerv = new OutputBatchWithHSoftmaxDerivative();
     	inputBatchDerv = new InputBatchDerivative();
         input = new InputLayer(nodeSize, inDynSize, initer);
         att = new Attention(inDynSize, inFixedSize, attSize, hiddenSize, initer);
-        output = new OutputLayerWithCov(inDynSize, inFixedSize, attSize, hiddenSize, cNum, initer);
+        output = new OutputLayerWithHSoftmax(inDynSize, inFixedSize, attSize, hiddenSize, cNum, initer);
         if(AlgConsHSoftmax.isContTraining) {
     		gru.loadCellParameter(AlgConsHSoftmax.lastModelFile);
     		att.loadCellParameter(AlgConsHSoftmax.lastModelFile);

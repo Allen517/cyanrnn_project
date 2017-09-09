@@ -1,6 +1,6 @@
 /**   
  * @package	com.kingwang.netattrnn
- * @File		CyanRNNWithTimeAndTimeTest.java
+ * @File		CyanRNNWithOnlyTimeAndTimeTest.java
  * @Crtdate	Feb 9, 2017
  *
  * Copyright (c) 2017 by <a href="mailto:wangyongqing.casia@gmail.com">King Wang</a>.   
@@ -22,8 +22,9 @@ import org.junit.Test;
 import com.kingwang.netattrnn.cells.impl.AttentionWithCov;
 import com.kingwang.netattrnn.cells.impl.GRUWithCov;
 import com.kingwang.netattrnn.cells.impl.InputLayerWithCov;
-import com.kingwang.netattrnn.cells.impl.OutputLayerWithCov;
+import com.kingwang.netattrnn.cells.impl.OutputLayerWithHSoftmax;
 import com.kingwang.netattrnn.cons.AlgConsHSoftmax;
+import com.kingwang.netattrnn.cons.MultiThreadCons;
 import com.kingwang.netattrnn.utils.MatIniter;
 import com.kingwang.netattrnn.utils.MatIniter.Type;
 
@@ -34,7 +35,7 @@ import com.kingwang.netattrnn.utils.MatIniter.Type;
  * Feb 9, 2017 12:48:29 AM
  * @version 1.0
  */
-public class CyanRNNWithTimeAndTimeTest {
+public class CyanRNNWithCovTest {
 	private int inDynSize;
 	private int inFixedSize;
 	private int outSize; 
@@ -45,7 +46,7 @@ public class CyanRNNWithTimeAndTimeTest {
 	private InputLayerWithCov input;
 	private GRUWithCov gru;
 	private AttentionWithCov att;
-	private OutputLayerWithCov output;
+	private OutputLayerWithHSoftmax output;
 	private Map<String, DoubleMatrix> nodeCode;
 	private Map<String, DoubleMatrix> acts = new HashMap<>();
 	private List<Double> y1_arr = new ArrayList<>();
@@ -74,7 +75,7 @@ public class CyanRNNWithTimeAndTimeTest {
         att = new AttentionWithCov(inDynSize, inFixedSize, outSize, outoutSize
         							, covSize, new MatIniter(Type.Test, 0, 0, 0));
 		gru = new GRUWithCov(inDynSize, inFixedSize, outSize, new MatIniter(Type.Test, 0, 0, 0)); // set cell
-		output = new OutputLayerWithCov(inDynSize, inFixedSize, outSize, outoutSize
+		output = new OutputLayerWithHSoftmax(inDynSize, inFixedSize, outSize, outoutSize
 									, AlgConsHSoftmax.cNum, new MatIniter(Type.Test, 0, 0, 0));
 		
 		DoubleMatrix Wx = new DoubleMatrix(nodeSize, inDynSize);
@@ -185,6 +186,7 @@ public class CyanRNNWithTimeAndTimeTest {
 	        if(nxtNdId.equalsIgnoreCase("0")) {
 	        	nxtNdIdx = 1;
 	        }
+	        
 			DoubleMatrix py = acts.get("py" + t);
 			DoubleMatrix pc = acts.get("pc" + t);
 			
@@ -266,7 +268,7 @@ public class CyanRNNWithTimeAndTimeTest {
 		input = new InputLayerWithCov(nodeSize, inDynSize, initer);
 		gru = new GRUWithCov(inDynSize, inFixedSize, outSize, initer);
 		att = new AttentionWithCov(inDynSize, inFixedSize, outSize, outoutSize, covSize, initer);
-		output = new OutputLayerWithCov(inDynSize, inFixedSize, outSize, outoutSize, AlgConsHSoftmax.cNum, initer);
+		output = new OutputLayerWithHSoftmax(inDynSize, inFixedSize, outSize, outoutSize, AlgConsHSoftmax.cNum, initer);
 		int reviseLoc = 1;
 		int targetT = 2;
 		
@@ -640,156 +642,6 @@ public class CyanRNNWithTimeAndTimeTest {
 		}
 		System.out.println(deltabz_2+","+(-acts.get("dbz").get(reviseLoc)));
 		assertEquals(deltabz_2, -acts.get("dbz").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wxy
-		 */
-		System.out.println("Wxy test");
-		gradientTestAndretActualGradient(ndList, output.Wxy[0], reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWxy_2 = 0;
-		double[] tmpy = new double[targetT+1];
-		for(int t=0; t<targetT+1; t++) {
-	    	int nodeCls = clsRcd[0];
-			tmpy[nodeCls] += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltaWxy_2 = tmpy[0]/2/delta;
-		System.out.println(deltaWxy_2+","+(-acts.get("dWxy0").get(reviseLoc)));
-		assertEquals(deltaWxy_2, -acts.get("dWxy0").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wdy
-		 */
-		System.out.println("Wdy test");
-		gradientTestAndretActualGradient(ndList, output.Wdy[0], reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWdy_2 = 0;
-		tmpy = new double[targetT+1];
-		for(int t=0; t<targetT+1; t++) {
-	    	int nodeCls = clsRcd[0];
-			tmpy[nodeCls] += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltaWdy_2 = tmpy[0]/2/delta;
-		System.out.println(deltaWdy_2+","+(-acts.get("dWdy0").get(reviseLoc)));
-		assertEquals(deltaWdy_2, -acts.get("dWdy0").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wty
-		 */
-		System.out.println("Wty test");
-		gradientTestAndretActualGradient(ndList, output.Wty[0], reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWty_2 = 0;
-		tmpy = new double[targetT+1];
-		for(int t=0; t<targetT+1; t++) {
-	    	int nodeCls = clsRcd[0];
-			tmpy[nodeCls] += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltaWty_2 = tmpy[0]/2/delta;
-		System.out.println(deltaWty_2+","+(-acts.get("dWty0").get(reviseLoc)));
-		assertEquals(deltaWty_2, -acts.get("dWty0").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wsy
-		 */
-		System.out.println("Wsy test");
-		gradientTestAndretActualGradient(ndList, output.Wsy[0], reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWsy_2 = 0;
-		tmpy = new double[targetT+1];
-		for(int t=0; t<targetT+1; t++) {
-	    	int nodeCls = clsRcd[0];
-			tmpy[nodeCls] += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltaWsy_2 = tmpy[0]/2/delta;
-		System.out.println(deltaWsy_2+","+(-acts.get("dWsy0").get(reviseLoc)));
-		assertEquals(deltaWsy_2, -acts.get("dWsy0").get(reviseLoc), 10e-7);
-		
-		/**
-		 * by
-		 */
-		System.out.println("by test");
-		gradientTestAndretActualGradient(ndList, output.by[0], reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaby_2 = 0;
-		tmpy = new double[targetT+1];
-		for(int t=0; t<targetT+1; t++) {
-			int nodeCls = clsRcd[0];
-			tmpy[nodeCls] += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltaby_2 += tmpy[0]/2/delta;
-		System.out.println(deltaby_2+","+(-acts.get("dby0").get(reviseLoc)));
-		assertEquals(deltaby_2, -acts.get("dby0").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wxc
-		 */
-		System.out.println("Wxc test");
-		gradientTestAndretActualGradient(ndList, output.Wxc, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWxc = 0;
-		for(int t=0; t<targetT+1; t++) {
-			deltaWxc += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltaWxc = deltaWxc/2/delta;
-		System.out.println(deltaWxc+","+(-acts.get("dWxc").get(reviseLoc)));
-		assertEquals(deltaWxc, -acts.get("dWxc").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wdc
-		 */
-		System.out.println("Wdc test");
-		gradientTestAndretActualGradient(ndList, output.Wdc, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWdc = 0;
-		for(int t=0; t<targetT+1; t++) {
-			deltaWdc += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltaWdc = deltaWdc/2/delta;
-		System.out.println(deltaWdc+","+(-acts.get("dWdc").get(reviseLoc)));
-		assertEquals(deltaWdc, -acts.get("dWdc").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wtc
-		 */
-		System.out.println("Wtc test");
-		gradientTestAndretActualGradient(ndList, output.Wtc, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWtc = 0;
-		for(int t=0; t<targetT+1; t++) {
-			deltaWtc += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltaWtc = deltaWtc/2/delta;
-		System.out.println(deltaWtc+","+(-acts.get("dWtc").get(reviseLoc)));
-		assertEquals(deltaWtc, -acts.get("dWtc").get(reviseLoc), 10e-7);
-		
-		/**
-		 * Wsc
-		 */
-		System.out.println("Wsc test");
-		gradientTestAndretActualGradient(ndList, output.Wsc, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltaWsc = 0;
-		for(int t=0; t<targetT+1; t++) {
-			deltaWsc += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltaWsc = deltaWsc/2/delta;
-		System.out.println(deltaWsc+","+(-acts.get("dWsc").get(reviseLoc)));
-		assertEquals(deltaWsc, -acts.get("dWsc").get(reviseLoc), 10e-7);
-		
-		/**
-		 * bc
-		 */
-		System.out.println("bc test");
-		gradientTestAndretActualGradient(ndList, output.bc, reviseLoc, targetT, delta);
-		// get the actual partial y/partial x
-		double deltabc = 0;
-		for(int t=0; t<targetT+1; t++) {
-			deltabc += y0_arr.get(t)-y1_arr.get(t);
-		}
-		deltabc = deltabc/2/delta;
-		System.out.println(deltabc+","+(-acts.get("dbc").get(reviseLoc)));
-		assertEquals(deltabc, -acts.get("dbc").get(reviseLoc), 10e-7);
 		
 		/**
 		 * Wxt
