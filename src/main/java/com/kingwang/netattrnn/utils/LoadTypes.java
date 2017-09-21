@@ -27,7 +27,7 @@ public enum LoadTypes {
 	Wvv("Wvv"), Wav("Wav"), Whv("Whv"), Wtv("Wtv"), bv("bv"),
 	//for output
 	Wxy("Wxy"), Wdy("Wdy"), Wty("Wty"), Wsy("Wsy"), by("by"), 
-	Wxc("Wxc"), Wdc("Wdc"), Wtc("Wtc"),Wsc("Wsc"), bsc("bsc"),
+	Wxc("Wxc"), Wdc("Wdc"), Wtc("Wtc"),Wsc("Wsc"), bsc("bsc"), bc("bc"),
 	Wxd("Wxd"), Wdd("Wdd"), Wsd("Wsd"), Wtd("Wtd"), bd("bd"), Wd("Wd"),
 	//for input
 	Wx("Wx"), bx("bx"),

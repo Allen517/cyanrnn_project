@@ -639,7 +639,7 @@ public class OutputLayerWithHSoftmax extends Operator implements Cell, Serializa
 						typeStr = "by";
 						cidx = Integer.parseInt(elems[0].substring(2));
 					}
-					String[] typeList = {"Wxc", "Wdc", "Wtc", "Wsc", "bsc"
+					String[] typeList = {"Wxc", "Wdc", "Wtc", "Wsc", "bc"
 								, "Wxd", "Wdd", "Wsd", "Wtd", "bd", "Wd"};
 					for(String tStr : typeList) {
 						if(elems[0].contains(tStr)) {
@@ -661,7 +661,7 @@ public class OutputLayerWithHSoftmax extends Operator implements Cell, Serializa
 					case Wdc: this.Wdc = matrixSetter(row, elems, this.Wdc); break;
 					case Wtc: this.Wtc = matrixSetter(row, elems, this.Wtc); break;
 					case Wsc: this.Wsc = matrixSetter(row, elems, this.Wsc); break;
-					case bsc: this.bc = matrixSetter(row, elems, this.bc); break;
+					case bc: this.bc = matrixSetter(row, elems, this.bc); break;
 					case Wxd: this.Wxd = matrixSetter(row, elems, this.Wxd); break;
 					case Wdd: this.Wdd = matrixSetter(row, elems, this.Wdd); break;
 					case Wsd: this.Wsd = matrixSetter(row, elems, this.Wsd); break;
