@@ -25,26 +25,33 @@ mvn clean install
 ### (Optional) Compile and packaging by Eclipse
 
 * Import a project and import "Existing Maven Project"
+
 ![import a project](figs/s1.png)
 
 * Click "Browse" and choose "cyanrnn_project"
+
 ![choose cyanrnn project](figs/s2.png)
 
 * Click "Finish"
+
 ![finish](figs/s3.png)
 
 * Export a "Runnable JAR file"
 
-1. Right click on the main procedure
+> Right click on the main procedure
+
 ![right click](figs/s4.png)
 
-2. Choose "Export"
+> Choose "Export"
+
 ![export](figs/s5.png)
 
-3. Choose "Runnable JAR file"
+> Choose "Runnable JAR file"
+
 ![runnable JAR file](figs/s6.png)
 
-4. Completed
+> Completed
+
 ![completed](figs/s7.png)
 
 ### Running
@@ -64,51 +71,41 @@ java -jar cyanrnn.jar config_cyanrnn_hsoftmax
 > baselines
 
 >> evals
->>> RNNModelEvals.java: implementation of RNN validation in tranining process
+>> --RNNModelEvals.java: implementation of RNN validation in tranining process
 
-*** rnn
-- RNN.java: main process of RNN
+>> rnn
+>> --RNN.java: main process of RNN
 
-** batchderv
-> When minibatch is finished, batchderv will average the derivation in all batches.
+> batchderv (When minibatch is finished, batchderv will average the derivation in all batches.)
+>> BatchDerivative.java: interface of BatchDerivative
+>> impl
+>> --AttBatchDerivative.java: for attention layer
+>> --AttWithCovBatchDerivative.java: for attention layer with coverage
+>> --GRUBatchDerivative.java: for GRU (RNN)
+>> --InputBatchDerivative.java: for input layer
+>> --LSTMBatchDerivative.java: for LSTM (RNN)
+>> --OutputBatchDerivative.java: for output layer
+>> --OutputBatchWithHSoftmaxDerivative.java: for output layer with hierachical softmax
+>> --OutputBatchWithOnlyTimeDerivative.java: for output layer (only calculating the generation of activated time)
+>> --OutputBatchWithTimeDerivative.java: for output layer with hierachical softmax (calculating the generation of activated time and activated users)
 
-- BatchDerivative.java: interface of BatchDerivative
+> cells
+> --Cell.java: interface of RNN layers
+> --Operator.java: basic operator for RNN layers
 
-*** impl
-- AttBatchDerivative.java: for attention layer
-- AttWithCovBatchDerivative.java: for attention layer with coverage
-- GRUBatchDerivative.java: for GRU (RNN)
-- InputBatchDerivative.java: for input layer
-- LSTMBatchDerivative.java: for LSTM (RNN)
-- OutputBatchDerivative.java: for output layer
-- OutputBatchWithHSoftmaxDerivative.java: for output layer with hierachical softmax
-- OutputBatchWithOnlyTimeDerivative.java: for output layer (only calculating the generation of activated time)
-- OutputBatchWithTimeDerivative.java: for output layer with hierachical softmax (calculating the generation of activated time and activated users)
+>> baselines
+>>> rnn/impl: implementation of RNN
 
-** cells
-- Cell.java: interface of RNN layers
-- Operator.java: basic operator for RNN layers
+>> impl: Implementation of CYAN-RNN and CYAN-RNN(cov)
 
-*** baselines
-- rnn/impl: implementation of RNN
+>>> main: Main procedure of CYAN-RNN
 
-*** impl
-Implementation of CYAN-RNN and CYAN-RNN(cov)
+> comm/utils: Common utilities
 
-*** main
-Main procedure of CYAN-RNN
+> cons: Constants
 
-** comm/utils
-Common utilities
+> dataset: Implementation of loading dataset
 
-** cons
-Constants
-
-** dataset
-Implementation of loading dataset
-
-** evals
-Implementation of CYAN-RNN and CYAN-RNN(cov) validation in tranining process
+> evals: Implementation of CYAN-RNN and CYAN-RNN(cov) validation in tranining process
  
-** utils
-Common utilities for RNN, CYAN-RNN, CYAN-RNN(cov)
+> utils: Common utilities for RNN, CYAN-RNN, CYAN-RNN(cov)
