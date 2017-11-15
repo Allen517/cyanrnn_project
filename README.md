@@ -8,8 +8,8 @@ This repository enables the reproduction of the experiments described in the art
 
 - maven==3.*
 - jdk==1.8
-- (optional)eclipse
-> install maven plugin (the lastest version has already installed maven plugin)
+- (optional) Eclipse
+> must install maven plugin (the lastest version has already installed maven plugin)
 
 ## Usage
 
@@ -35,16 +35,16 @@ mvn clean install
 
 * Export a "Runnable JAR file"
 
-** Right click on the main procedure
+1. Right click on the main procedure
 ![right click](figs/s4.png)
 
-** Choose "Export"
+2. Choose "Export"
 ![export](figs/s5.png)
 
-** Choose "Runnable JAR file"
+3. Choose "Runnable JAR file"
 ![runnable JAR file](figs/s6.png)
 
-** Completed
+4. Completed
 ![completed](figs/s7.png)
 
 ### Running
@@ -61,10 +61,10 @@ java -jar cyanrnn.jar config_cyanrnn_hsoftmax
 
 * main.java.com.kingwang.netattrnn
 
-** baselines
+> baselines
 
-*** evals
-- RNNModelEvals.java: implementation of RNN validation in tranining process
+>> evals
+>>> RNNModelEvals.java: implementation of RNN validation in tranining process
 
 *** rnn
 - RNN.java: main process of RNN
