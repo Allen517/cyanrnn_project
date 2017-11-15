@@ -4,6 +4,9 @@ This repository enables the reproduction of the experiments described in the art
 
 [Yongqing Wang, Huawei Shen, Shenghua Liu, Jinhua Gao and Xueqi Cheng. Cascade dynamics modeling with attention-based recurrent neural network. The 26th International Joint Conference on Artificial Intelligence (IJCAI-17). Melbourne, Australia, 2017.](https://www.ijcai.org/proceedings/2017/0416.pdf)
 
+The demo of this project is located in
+[my personal website](http://yongqwang.com/public/res_dat/UAI_demo.tar.gz)
+
 ## Requirements
 
 - maven==3.*
