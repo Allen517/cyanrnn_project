@@ -7,3 +7,6 @@
 - XX.train: training set
 - XX.val: validation set
 - format: [cascade_id, [[uid, time_stamps],...]]
+
+# Other datasets
+Please check other datasets in my personal website (http://yongqwang.com/)
