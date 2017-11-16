@@ -1,6 +1,6 @@
 # XX.freq.stats
 - format:[uid, freqs, proportion of freqs]
-- list of uids are followed by descending order of freqs
+- all uids are arranged by descending order according to freqs
 
 # XX.test, XX.train, XX.val
 - XX.test: test set
