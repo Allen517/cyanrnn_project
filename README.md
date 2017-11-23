@@ -12,7 +12,7 @@ The demo of this project is located in
 - maven==3.*
 - jdk==1.8
 - (optional) Eclipse
-> must install maven plugin (the lastest version has already installed maven plugin)
+> You'd better install maven plugin in eclipse (the lastest version has already installed maven plugin)
 
 ## Usage
 
