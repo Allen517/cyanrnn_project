@@ -8,13 +8,13 @@ The demo of this project is located in
 [my personal website](http://yongqwang.com/public/res_dat/UAI_demo.tar.gz)
 
 # Content
-* [Requirements](#Requirements)
-* [Usage](#Usage)
+* [Requirements](#requirements)
+* [Usage](#usage)
    * Install the project
    * (Optional) Compile and packaging by Eclipse
    * Running
-* [Data Format](#Data Format)
-* [Specfication](#Specfication)
+* [Data Format](#data_Format)
+* [Specfication](#specfication)
    * The architecture of "src" directory
 
 ## Requirements
