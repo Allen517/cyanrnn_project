@@ -10,12 +10,12 @@ The demo of this project is located in
 # Content
 * [Requirements](#Requirements)
 * [Usage](#Usage)
-   * [Install the project](#Install the project)
-   * [(Optional) Compile and packaging by Eclipse](#(Optional) Compile and packaging by Eclipse)
-   * [Running](#Running)
+   * Install the project
+   * (Optional) Compile and packaging by Eclipse
+   * Running
 * [Data Format](#Data Format)
 * [Specfication](#Specfication)
-   * [The architecture of "src" directory](#The architecture of "src" directory)
+   * The architecture of "src" directory
 
 ## Requirements
 
