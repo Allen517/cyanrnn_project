@@ -7,6 +7,16 @@ This repository enables the reproduction of the experiments described in the art
 The demo of this project is located in
 [my personal website](http://yongqwang.com/public/res_dat/UAI_demo.tar.gz)
 
+# Content
+* [Requirements](#Requirements)
+* [Usage](#Usage)
+   * [Install the project](#Install the project)
+   * [(Optional) Compile and packaging by Eclipse](#(Optional) Compile and packaging by Eclipse)
+   * [Running](#Running)
+* [Data Format](#Data Format)
+* [Specfication](#Specfication)
+   * [The architecture of "src" directory](#The architecture of "src" directory)
+
 ## Requirements
 
 - maven==3.*
