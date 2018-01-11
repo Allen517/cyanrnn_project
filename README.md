@@ -13,7 +13,7 @@ The demo of this project is located in
    * Install the project
    * (Optional) Compile and packaging by Eclipse
    * Running
-* [Data Format](#data-Format)
+* [Data](#data)
 * [Specfication](#specfication)
    * The architecture of "src" directory
 
@@ -75,7 +75,8 @@ java -jar cyanrnn.jar config_cyanrnn_hsoftmax
 ```
 > move the runnable jar (e.g., the jar file is called "cyanrnn.jar") into the directory of cyanrnn_project
 
-## Data-Format
+## Data Format
+[back to top](#readme)
 
 * Please check the [instruction](data/spec.md)
 
