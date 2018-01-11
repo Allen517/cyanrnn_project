@@ -24,6 +24,8 @@ The demo of this project is located in
 - (optional) Eclipse
 > You'd better install maven plugin in eclipse (the lastest version has already installed maven plugin)
 
+[back to top](#readme)
+
 ## Usage
 
 ### Install the project
@@ -34,6 +36,8 @@ cd cyanrnn_project
 mvn clean install
 
 ```
+
+[back to top](#readme)
 
 ### (Optional) Compile and packaging by Eclipse
 
@@ -67,6 +71,8 @@ mvn clean install
 
 ![completed](figs/s7.png)
 
+[back to top](#readme)
+
 ### Running
 
 ```bash
@@ -75,10 +81,13 @@ java -jar cyanrnn.jar config_cyanrnn_hsoftmax
 ```
 > move the runnable jar (e.g., the jar file is called "cyanrnn.jar") into the directory of cyanrnn_project
 
-## Data Format
 [back to top](#readme)
 
+## Data
+
 * Please check the [instruction](data/spec.md)
+
+[back to top](#readme)
 
 ## Specfication
 
@@ -143,3 +152,5 @@ java -jar cyanrnn.jar config_cyanrnn_hsoftmax
 > evals: Implementation of CYAN-RNN and CYAN-RNN(cov) validation in tranining process
  
 > utils: Common utilities for RNN, CYAN-RNN, CYAN-RNN(cov)
+
+[back to top](#readme)
