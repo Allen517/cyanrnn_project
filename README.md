@@ -13,7 +13,7 @@ The demo of this project is located in
    * Install the project
    * (Optional) Compile and packaging by Eclipse
    * Running
-* [Data Format](#data_Format)
+* [Data Format](#data-Format)
 * [Specfication](#specfication)
    * The architecture of "src" directory
 
