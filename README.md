@@ -7,6 +7,8 @@ This repository enables the reproduction of the experiments described in the art
 The demo of this project is located in
 [my personal website](http://yongqwang.com/public/res_dat/UAI_demo.tar.gz)
 
+****
+
 # Content
 * [Requirements](#requirements)
 * [Usage](#usage)
@@ -16,6 +18,8 @@ The demo of this project is located in
 * [Data](#data)
 * [Specfication](#specfication)
    * The architecture of "src" directory
+
+****
 
 ## Requirements
 
@@ -36,8 +40,6 @@ cd cyanrnn_project
 mvn clean install
 
 ```
-
-[back to top](#readme)
 
 ### (Optional) Compile and packaging by Eclipse
 
@@ -70,8 +72,6 @@ mvn clean install
 > Completed
 
 ![completed](figs/s7.png)
-
-[back to top](#readme)
 
 ### Running
 
