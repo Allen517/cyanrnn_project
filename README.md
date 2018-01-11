@@ -65,6 +65,10 @@ java -jar cyanrnn.jar config_cyanrnn_hsoftmax
 ```
 > move the runnable jar (e.g., the jar file is called "cyanrnn.jar") into the directory of cyanrnn_project
 
+## Data Format
+
+* Please check the [instruction](data/spec.md)
+
 ## Specfication
 
 ### The architecture of "src" directory
